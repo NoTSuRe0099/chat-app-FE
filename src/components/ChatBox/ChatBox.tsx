@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchAllUser } from '../../Actions/ChatActions';
@@ -13,17 +14,18 @@ import {
   pushNewMessage,
   selectChatState,
 } from './chatSlice';
-import toast from 'react-hot-toast';
+
+const audioUrl = '/notification-sound-7062.mp3';
 
 const ChatPage = () => {
   const { socket } = useSocket();
   const dispatch = useDispatch();
   const chatState = useSelector(selectChatState);
   const authState = useSelector(selectAuth);
-  const audioRef = useRef(null);
   const params = useParams();
   const [currentChatUser, setCurrentChatUser] = useState<User | null>(null);
   const [onlieUsersList, setOnlieUsersList] = useState<string[]>([]);
+  const [toggleUserList, setToggleUserList] = useState(true);
   const navigate = useNavigate();
   const messageContainerRef = useRef(null);
 
@@ -34,6 +36,9 @@ const ChatPage = () => {
       );
 
       setCurrentChatUser(user!);
+      setToggleUserList(false);
+    } else {
+      setToggleUserList(true);
     }
   }, [params?.userId]);
 
@@ -91,6 +96,7 @@ const ChatPage = () => {
           if (Notification.permission === 'granted') {
             sendNotification(data);
           }
+          new Audio(audioUrl).play();
         } else {
           const userId = location.href.split('/chat')[1]
             ? String(location.href.split('/chat')[1])?.replace('/', '')
@@ -136,10 +142,9 @@ const ChatPage = () => {
         sentAt: new Date().toISOString(),
         senderId: authState?.user?._id ?? '',
       };
-
       dispatch(pushNewMessage({ id: payload?.receiverId, chat: payload }));
       socket.emit('SEND_MESSAGE', payload);
-
+      // new Audio(audioUrl).play();
       messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
@@ -148,14 +153,24 @@ const ChatPage = () => {
     ...currentChatUser!,
     isOnline: onlieUsersList?.includes(currentChatUser?._id!),
   };
-  const audioUrl = '/notification-sound-7062.mp3';
+
+  const openUserList = () => {
+    setToggleUserList(true);
+    navigate('/');
+  };
+
   return (
     <div className="h-full">
-      <audio className="hidden" ref={audioRef} src={audioUrl} />
+      {/* <audio className="hidden" ref={audioRef} src={audioUrl} /> */}
       <div className="min-w-full border rounded h-full flex flex-col md:flex-row">
-        <UserList onlieUsersList={onlieUsersList} userList={chatState?.users} />
+        <div className={`${!toggleUserList && 'hidden'}  md:flex md:w-1/4`}>
+          <UserList
+            onlieUsersList={onlieUsersList}
+            userList={chatState?.users}
+          />
+        </div>
 
-        {currentChatUser && (
+        {currentChatUser && !toggleUserList && (
           <>
             <CurrentChatWindow
               messageContainerRef={messageContainerRef}
@@ -163,6 +178,7 @@ const ChatPage = () => {
               messages={chatState?.chats[currentChatUser?._id]}
               user={authState?.user!}
               sendMessage={sendMessage}
+              openUserList={openUserList}
             />
           </>
         )}

@@ -11,6 +11,7 @@ interface Iprops {
   user: User;
   sendMessage: (message: string) => void;
   messageContainerRef: React.MutableRefObject<any> | null;
+  openUserList: () => void;
 }
 
 const CurrentChatWindow = (props: Iprops) => {
@@ -20,6 +21,7 @@ const CurrentChatWindow = (props: Iprops) => {
     messages = [],
     sendMessage,
     messageContainerRef,
+    openUserList,
   } = props;
   const [message, setMessage] = useState('');
 
@@ -31,57 +33,66 @@ const CurrentChatWindow = (props: Iprops) => {
   return (
     <>
       <div className="w-full flex flex-col justify-between h-full">
-        <div className='flex flex-col'>
-          <div className="relative flex items-center p-3 border-b border-gray-300">
+        <div className="relative flex items-center p-3 border-b border-gray-300">
+          <button className="md:hidden" onClick={openUserList}>
+            <svg
+              height="25"
+              viewBox="0 0 48 48"
+              width="48"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M0 0h48v48h-48z" fill="none" />
+              <path d="M40 22h-24.34l11.17-11.17-2.83-2.83-16 16 16 16 2.83-2.83-11.17-11.17h24.34v-4z" />
+            </svg>
+          </button>
+          <div className="relative">
             <img
               className="object-cover w-10 h-10 rounded-full"
               src="https://static.vecteezy.com/system/resources/previews/026/619/142/non_2x/default-avatar-profile-icon-of-social-media-user-photo-image-vector.jpg"
               alt="username"
             />
-            <span className="block ml-2 font-bold text-gray-600">
-              {chatUser?.name || 'NA'}
-            </span>
             <span
               className={`absolute w-3 h-3 ${
                 chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
-              } rounded-full left-10 top-3`}
+              } rounded-full left-6 top-1`}
             ></span>
           </div>
-          <div
-            // ref={messageContainerRef}
-            className="relative w-full p-6 overflow-y-auto h-[40rem]"
-          >
-            {messages?.length ? (
-              <ul className="space-y-2">
-                {messages?.map((chat, index: number) => (
-                  <li
-                    key={`_${index}`}
-                    className={`flex ${
-                      chat?.senderId === user?._id
-                        ? 'justify-end'
-                        : 'justify-start'
-                    }`}
-                  >
-                    <div className="relative max-w-xl px-4 py-2 text-gray-700 rounded shadow">
-                      <span className="block">{chat?.message}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div>No Messages</div>
-            )}
-            <div ref={messageContainerRef} />
-          </div>
+
+          <span className="block ml-2 font-bold text-gray-600">
+            {chatUser?.name || 'NA'}
+          </span>
         </div>
 
+        <div className="relative w-full p-6 overflow-y-auto h-full">
+          {messages?.length ? (
+            <ul className="space-y-2">
+              {messages?.map((chat, index: number) => (
+                <li
+                  key={`_${index}`}
+                  className={`flex ${
+                    chat?.senderId === user?._id
+                      ? 'justify-end'
+                      : 'justify-start'
+                  }`}
+                >
+                  <div className="relative max-w-xl px-4 py-2 text-gray-700 rounded shadow">
+                    <span className="block">{chat?.message}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div>No Messages</div>
+          )}
+          <div ref={messageContainerRef} />
+        </div>
 
         <form
           onSubmit={(e) => {
             e?.preventDefault();
             handleSubmitMessage();
           }}
-          className="flex items-center justify-between w-full p-3 border-t border-gray-300 h-[41px]"
+          className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px]"
         >
           <button>
             <svg

@@ -34,7 +34,7 @@ const UserList = (props: IProps) => {
 
   return (
     <>
-      <div className="border-r border-gray-300 md:w-1/4 flex flex-col justify-between">
+      <div className="border-r border-gray-300 w-full flex flex-col justify-between h-screen">
         <div>
           <div className="mx-3 my-3">
             <div className="relative text-gray-600">
