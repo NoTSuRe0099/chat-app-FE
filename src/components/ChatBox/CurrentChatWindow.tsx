@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { IChat, User } from './chatSlice';
+import { ISingleUserChat, User } from './chatSlice';
 
 export interface chatUser extends User {
   isOnline: boolean;
@@ -7,7 +7,7 @@ export interface chatUser extends User {
 
 interface Iprops {
   chatUser: chatUser;
-  messages: IChat[];
+  messages: ISingleUserChat[];
   user: User;
   sendMessage: (message: string) => void;
   messageContainerRef: React.MutableRefObject<any> | null;

@@ -8,7 +8,7 @@ import { useSocket } from '../../context/SocketContext';
 import CurrentChatWindow, { chatUser } from './CurrentChatWindow';
 import UserList from './UserList';
 import {
-  IChat,
+  ISingleUserChat,
   User,
   flushMessages,
   pushNewMessage,
@@ -60,7 +60,7 @@ const ChatPage = () => {
     return chatState?.users?.find((user) => user?._id === senderId);
   };
 
-  const sendNotification = (data: IChat) => {
+  const sendNotification = (data: ISingleUserChat) => {
     const userObj = getUserByUserId(data?.senderId);
     const message = `${userObj?.name}: ${data?.message}`;
 
@@ -71,7 +71,9 @@ const ChatPage = () => {
     });
 
     greeting.addEventListener('click', function () {
-      const targetURL = `http://localhost:4000/chat/${userObj?._id}`;
+      const targetURL = `${import.meta.env.VITE_BASE_API_URL}/chat/${
+        userObj?._id
+      }`;
 
       // Create a button to trigger the new tab
       const openButton = document.createElement('button');
@@ -87,7 +89,7 @@ const ChatPage = () => {
 
   useEffect(() => {
     if (socket) {
-      socket.on('RECEIVE_MESSAGE', (data: IChat) => {
+      socket.on('RECEIVE_MESSAGE', (data: ISingleUserChat) => {
         dispatch(pushNewMessage({ id: data?.senderId, chat: data }));
         //? auto Scroll
         messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
@@ -136,7 +138,7 @@ const ChatPage = () => {
 
   const sendMessage = (message: string) => {
     if (socket) {
-      const payload: IChat = {
+      const payload: ISingleUserChat = {
         message: message,
         receiverId: currentChatUser?._id ?? '',
         sentAt: new Date().toISOString(),

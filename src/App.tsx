@@ -50,7 +50,7 @@ const App: React.FC = (props: any) => {
   const [timer, setTimer] = useState(0);
   const [isFlushMessagesOn, setIsFlushMessagesOn] = useState(true);
 
-  const flushInterval = 20;
+  const flushInterval = 40;
 
   useEffect(() => {
     if (isFlushMessagesOn) {

@@ -7,19 +7,28 @@ export interface User {
   email: string;
 }
 export interface IChats {
-  [key: string]: IChat[];
+  [key: string]: ISingleUserChat[];
 }
 export interface IChat {
   senderId: string;
-  receiverId: string;
   message: string;
   sentAt: Date | string;
 }
 
+export interface IgroupChats {
+  name: string;
+  _id: string;
+  messages: IChat[];
+}
+
+export interface ISingleUserChat extends IChat {
+  receiverId: string;
+}
 export interface IChatState {
   users: User[];
   chats: IChats;
-  currentChat: IChat[];
+  currentChat: ISingleUserChat[];
+  chatGroups: IgroupChats[];
 }
 const storedUserList = sessionStorage.getItem('userList')
   ? JSON.parse(sessionStorage.getItem('userList'))
@@ -28,6 +37,7 @@ const initialState: IChatState = {
   users: storedUserList || [],
   chats: {},
   currentChat: [],
+  chatGroups: [],
 };
 
 const ChatSlice = createSlice({
@@ -35,10 +45,11 @@ const ChatSlice = createSlice({
   initialState,
   reducers: {
     setAllUsers: (state, action: PayloadAction<User[] | []>) => {
-      sessionStorage.setItem('userList', JSON.stringify(action?.payload));
+      action?.payload &&
+        sessionStorage.setItem('userList', JSON.stringify(action?.payload));
       state.users = action?.payload || [];
     },
-    pushNewCurrentChat: (state, action: PayloadAction<IChat>) => {
+    pushNewCurrentChat: (state, action: PayloadAction<ISingleUserChat>) => {
       state.currentChat = [...state.currentChat, action?.payload];
     },
     flushMessages: (state) => {

@@ -3,6 +3,8 @@ import { User, selectChatState } from './chatSlice';
 import { selectAuth } from '../../auth/AuthSlice';
 import { useNavigate } from 'react-router-dom';
 import { logoutAction } from '../../Actions/AuthActions';
+import CreateGroupChatModal from '../CreateGroupChatModal/CreateGroupChatModal';
+import { useState } from 'react';
 
 interface IProps {
   userList: User[];
@@ -15,17 +17,26 @@ const UserList = (props: IProps) => {
   const authState = useSelector(selectAuth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
+
+  const openCreateGroupModal = () => {
+    setIsCreateGroupModalOpen(true);
+  };
+
+  const closeCreateGroupModal = () => {
+    setIsCreateGroupModalOpen(false);
+  };
 
   const logoutHandler = () => {
     //@ts-ignore
     dispatch(logoutAction());
     navigate('/login');
   };
-  const getRecentMessage = (id: string): string => {
+  const getRecentMessage = (userId: string): string => {
     const chatObj =
-      chatState?.chats?.[id]?.[chatState?.chats?.[id]?.length - 1];
+      chatState?.chats?.[userId]?.[chatState?.chats?.[userId]?.length - 1];
 
-    return chatState?.chats?.[id]
+    return chatState?.chats?.[userId]
       ? chatObj?.senderId === authState?.user?._id
         ? `You: ${chatObj?.message}`
         : chatObj?.message
@@ -104,6 +115,16 @@ const UserList = (props: IProps) => {
         </div>
 
         <div>
+          <div className="w-full px-3">
+            <button
+              onClick={openCreateGroupModal}
+              className="flex justify-center items-center w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-md my-4"
+            >
+              <h1 className="text-md font-semibold text-gray-700">
+                Create Group
+              </h1>
+            </button>
+          </div>
           <li className="flex items-center justify-between text-sm transition duration-150 ease-in-out border-b border-t border-gray-300 cursor-pointerbg-gray-100 focus:outline-none pr-3">
             <div className="flex items-center">
               <div className="relative flex items-center p-3">
@@ -119,7 +140,7 @@ const UserList = (props: IProps) => {
                   {authState?.user?.name}
                 </span>
               </div>
-            </div>
+            </div>openCreateGroupModal
 
             <button onClick={logoutHandler}>
               <svg
@@ -134,6 +155,11 @@ const UserList = (props: IProps) => {
           </li>
         </div>
       </div>
+
+      <CreateGroupChatModal
+        isModalOpen={isCreateGroupModalOpen}
+        closeModal={closeCreateGroupModal}
+      />
     </>
   );
 };
