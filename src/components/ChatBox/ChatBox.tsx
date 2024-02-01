@@ -3,17 +3,12 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchAllUser } from '../../Actions/ChatActions';
+import { ISingleUserChat, User } from '../../Types/chatSliceTypes';
 import { selectAuth } from '../../auth/AuthSlice';
 import { useSocket } from '../../context/SocketContext';
 import CurrentChatWindow, { chatUser } from './CurrentChatWindow';
 import UserList from './UserList';
-import {
-  ISingleUserChat,
-  User,
-  flushMessages,
-  pushNewMessage,
-  selectChatState,
-} from './chatSlice';
+import { flushMessages, pushNewMessage, selectChatState } from './chatSlice';
 
 const audioUrl = '/notification-sound-7062.mp3';
 

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import callApi from '../../functions/apiClient';
+import { useState } from 'react';
 import { useSocket } from '../../context/SocketContext';
+import callApi from '../../functions/apiClient';
 
 interface Iprops {
   isModalOpen: boolean;

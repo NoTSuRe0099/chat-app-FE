@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { User, selectChatState } from './chatSlice';
-import { selectAuth } from '../../auth/AuthSlice';
 import { useNavigate } from 'react-router-dom';
 import { logoutAction } from '../../Actions/AuthActions';
+import { User } from '../../Types/chatSliceTypes';
+import { selectAuth } from '../../auth/AuthSlice';
 import CreateGroupChatModal from '../CreateGroupChatModal/CreateGroupChatModal';
-import { useState } from 'react';
+import { selectChatState } from './chatSlice';
 
 interface IProps {
   userList: User[];
@@ -140,8 +141,8 @@ const UserList = (props: IProps) => {
                   {authState?.user?.name}
                 </span>
               </div>
-            </div>openCreateGroupModal
-
+            </div>
+            openCreateGroupModal
             <button onClick={logoutHandler}>
               <svg
                 className="h-5"

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ISingleUserChat, User } from './chatSlice';
+import { ISingleUserChat, User } from '../../Types/chatSliceTypes';
 
 export interface chatUser extends User {
   isOnline: boolean;
