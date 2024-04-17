@@ -12,6 +12,7 @@ const initialState: IChatState = {
   chats: {},
   currentChat: [],
   chatGroups: [],
+  chatGroupMessages: {},
 };
 
 const ChatSlice = createSlice({
@@ -30,6 +31,9 @@ const ChatSlice = createSlice({
       state.currentChat = [];
       state.chats = {};
     },
+    setMyChatgroups: (state, action: PayloadAction<any>) => {
+      state.chatGroups = action?.payload;
+    },
     pushNewMessage: (state, action: PayloadAction<any>) => {
       const { id, chat } = action.payload;
       const _id = String(id);
@@ -39,6 +43,27 @@ const ChatSlice = createSlice({
 
       state.chats = _chats;
     },
+    pushNewGroupChatMessage: (state, action: PayloadAction<any>) => {
+      const { id, chat } = action.payload;
+      const chatGroupMessages = { ...state.chatGroupMessages };
+
+      // const index = _chatGroups?.findIndex((group) => group?._id === id);
+
+      // if (index !== -1) {
+      //   _chatGroups[index].messages = chat;
+      // }
+
+      // state.chatGroups = _chatGroups;
+
+      const _id = String(id);
+      //@ts-ignore
+      chatGroupMessages[_id] =
+        chatGroupMessages[_id]?.length > 0
+          ? [...chatGroupMessages?.[_id], chat]
+          : [chat];
+
+      state.chatGroupMessages = chatGroupMessages;
+    },
   },
 });
 
@@ -47,6 +72,8 @@ export const {
   pushNewCurrentChat,
   flushMessages,
   pushNewMessage,
+  setMyChatgroups,
+  pushNewGroupChatMessage,
 } = ChatSlice.actions;
 
 // Selector to access auth state

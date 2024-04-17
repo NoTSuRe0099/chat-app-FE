@@ -1,17 +1,22 @@
 import { useState } from 'react';
-import { ISingleUserChat, User } from '../../Types/chatSliceTypes';
+import { IChat, ISingleUserChat, User } from '../../Types/chatSliceTypes';
 
 export interface chatUser extends User {
   isOnline: boolean;
 }
 
 interface Iprops {
-  chatUser: chatUser;
-  messages: ISingleUserChat[];
+  chatUser?: chatUser;
+  messages: ISingleUserChat[] | IChat[];
   user: User;
   sendMessage: (message: string) => void;
   messageContainerRef: React.MutableRefObject<any> | null;
   openUserList: () => void;
+  isGroupChat: boolean;
+  chatGroupInfo?: {
+    userList: string[];
+    name: string;
+  };
 }
 
 const CurrentChatWindow = (props: Iprops) => {
@@ -22,6 +27,8 @@ const CurrentChatWindow = (props: Iprops) => {
     sendMessage,
     messageContainerRef,
     openUserList,
+    isGroupChat = false,
+    chatGroupInfo,
   } = props;
   const [message, setMessage] = useState('');
 
@@ -45,21 +52,23 @@ const CurrentChatWindow = (props: Iprops) => {
               <path d="M40 22h-24.34l11.17-11.17-2.83-2.83-16 16 16 16 2.83-2.83-11.17-11.17h24.34v-4z" />
             </svg>
           </button>
-          <div className="relative">
-            <img
-              className="object-cover w-10 h-10 rounded-full"
-              src="https://static.vecteezy.com/system/resources/previews/026/619/142/non_2x/default-avatar-profile-icon-of-social-media-user-photo-image-vector.jpg"
-              alt="username"
-            />
-            <span
-              className={`absolute w-3 h-3 ${
-                chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
-              } rounded-full left-6 top-1`}
-            ></span>
-          </div>
+          {!isGroupChat && (
+            <div className="relative">
+              <img
+                className="object-cover w-10 h-10 rounded-full"
+                src="https://static.vecteezy.com/system/resources/previews/026/619/142/non_2x/default-avatar-profile-icon-of-social-media-user-photo-image-vector.jpg"
+                alt="username"
+              />
+              <span
+                className={`absolute w-3 h-3 ${
+                  chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
+                } rounded-full left-6 top-1`}
+              ></span>
+            </div>
+          )}
 
           <span className="block ml-2 font-bold text-gray-600">
-            {chatUser?.name || 'NA'}
+            {isGroupChat ? chatGroupInfo?.name : chatUser?.name || 'NA'}
           </span>
         </div>
 

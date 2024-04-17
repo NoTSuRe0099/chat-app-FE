@@ -15,15 +15,20 @@ export interface IChat {
 export interface IgroupChats {
   name: string;
   _id: string;
-  messages: IChat[];
+  userList: string[];
 }
 
 export interface ISingleUserChat extends IChat {
   receiverId: string;
+}
+
+export interface IChatGroupMessages {
+  [key: string]: IChat[];
 }
 export interface IChatState {
   users: User[];
   chats: IChats;
   currentChat: ISingleUserChat[];
   chatGroups: IgroupChats[];
+  chatGroupMessages: IChatGroupMessages;
 }

@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { logoutAction } from '../../Actions/AuthActions';
+import { fetchMyChatgroups } from '../../Actions/ChatActions';
+import { ChatTypeEnum } from '../../Enums';
 import { User } from '../../Types/chatSliceTypes';
 import { selectAuth } from '../../auth/AuthSlice';
 import CreateGroupChatModal from '../CreateGroupChatModal/CreateGroupChatModal';
 import { selectChatState } from './chatSlice';
+import { useSocket } from '../../context/SocketContext';
 
 interface IProps {
   userList: User[];
@@ -14,15 +17,29 @@ interface IProps {
 
 const UserList = (props: IProps) => {
   const { userList = [], onlieUsersList } = props;
+  const { socket } = useSocket();
   const chatState = useSelector(selectChatState);
   const authState = useSelector(selectAuth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
-
+  const { chatGroups } = chatState;
   const openCreateGroupModal = () => {
     setIsCreateGroupModalOpen(true);
   };
+
+  useEffect(() => {
+    //@ts-ignore
+    dispatch(fetchMyChatgroups());
+  }, []);
+
+  useEffect(() => {
+    if (chatState?.chatGroups?.length) {
+      chatState?.chatGroups?.forEach(async (it) => {
+        await socket.emit('JOIN_GROUP', { groupId: it?._id });
+      });
+    }
+  }, [chatState?.chatGroups]);
 
   const closeCreateGroupModal = () => {
     setIsCreateGroupModalOpen(false);
@@ -76,9 +93,12 @@ const UserList = (props: IProps) => {
             <h2 className="my-2 mb-2 ml-2 text-lg text-gray-600">Chats</h2>
             <>
               {userList?.map((user: User) => (
-                <li
+                <Link
                   key={user?._id}
-                  onClick={() => navigate(`/chat/${user?._id}`)}
+                  to={`/chat/${ChatTypeEnum.USER}/${user?._id}`}
+                  // onClick={() =>
+                  //   navigate(`/chat/${ChatTypeEnum.USER}/${user?._id}`)
+                  // }
                   className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
                 >
                   <div className="relative flex items-center p-3">
@@ -109,7 +129,49 @@ const UserList = (props: IProps) => {
                       {getRecentMessage(user?._id) || 'No Messages'}
                     </span>
                   </div>
-                </li>
+                </Link>
+              ))}
+              {chatGroups?.map((group) => (
+                <Link
+                  key={group?._id}
+                  to={`/chat/${ChatTypeEnum.GROUP_CHAT}/${group?._id}`}
+                  // onClick={() =>
+                  // navigate(`/chat/${ChatTypeEnum.GROUP_CHAT}/${group?._id}`)
+                  // }
+                  className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
+                >
+                  <div className="relative flex items-center p-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex justify-center items-center">
+                      <img
+                        className="object-cover w-7 h-7 "
+                        src="https://icon-library.com/images/group-chat-icon/group-chat-icon-13.jpg"
+                        alt="username"
+                      />
+                    </div>
+
+                    {/* <span
+                      className={`absolute w-3 h-3 ${
+                        onlieUsersList?.includes(group?._id)
+                          ? 'bg-green-600'
+                          : 'bg-red-600'
+                      }  rounded-full left-10 top-3`}
+                    ></span> */}
+                  </div>
+
+                  <div className="w-full pb-2">
+                    <div className="flex justify-between">
+                      <span className="block ml-2 font-semibold text-gray-600">
+                        {group?.name}
+                      </span>
+                      {/* <span className="block ml-2 text-sm text-gray-600">
+                      25 minutes
+                    </span> */}
+                    </div>
+                    <span className="block ml-2 text-sm text-gray-600">
+                      {getRecentMessage(group?._id) || 'No Messages'}
+                    </span>
+                  </div>
+                </Link>
               ))}
             </>
           </ul>
@@ -142,7 +204,7 @@ const UserList = (props: IProps) => {
                 </span>
               </div>
             </div>
-            openCreateGroupModal
+
             <button onClick={logoutHandler}>
               <svg
                 className="h-5"

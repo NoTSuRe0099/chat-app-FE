@@ -3,12 +3,23 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchAllUser } from '../../Actions/ChatActions';
-import { ISingleUserChat, User } from '../../Types/chatSliceTypes';
+import {
+  IChat,
+  ISingleUserChat,
+  IgroupChats,
+  User,
+} from '../../Types/chatSliceTypes';
 import { selectAuth } from '../../auth/AuthSlice';
 import { useSocket } from '../../context/SocketContext';
 import CurrentChatWindow, { chatUser } from './CurrentChatWindow';
 import UserList from './UserList';
-import { flushMessages, pushNewMessage, selectChatState } from './chatSlice';
+import {
+  flushMessages,
+  pushNewGroupChatMessage,
+  pushNewMessage,
+  selectChatState,
+} from './chatSlice';
+import { ChatTypeEnum } from '../../Enums';
 
 const audioUrl = '/notification-sound-7062.mp3';
 
@@ -18,24 +29,34 @@ const ChatPage = () => {
   const chatState = useSelector(selectChatState);
   const authState = useSelector(selectAuth);
   const params = useParams();
-  const [currentChatUser, setCurrentChatUser] = useState<User | null>(null);
-  const [onlieUsersList, setOnlieUsersList] = useState<string[]>([]);
-  const [toggleUserList, setToggleUserList] = useState(true);
   const navigate = useNavigate();
   const messageContainerRef = useRef(null);
 
+  const [currentChatUser, setCurrentChatUser] = useState<User | null>(null);
+  const [onlieUsersList, setOnlieUsersList] = useState<string[]>([]);
+  const [toggleUserList, setToggleUserList] = useState(true);
+  const [currentChatGroup, setCurrentChatGroup] = useState<IgroupChats | null>(
+    null
+  );
+
   useEffect(() => {
-    if (params?.userId) {
-      const user = chatState?.users?.find(
-        (user) => user?._id === params?.userId
-      );
+    if (params?.id && params?.chatType === ChatTypeEnum.USER) {
+      const user = chatState?.users?.find((user) => user?._id === params?.id);
 
       setCurrentChatUser(user!);
+      setToggleUserList(false);
+    } else if (params?.id && params?.chatType === ChatTypeEnum.GROUP_CHAT) {
+      const groupChatState =
+        params?.chatType === ChatTypeEnum.GROUP_CHAT
+          ? chatState?.chatGroups?.find((it) => it?._id === params?.id)
+          : null;
+
+      setCurrentChatGroup(groupChatState);
       setToggleUserList(false);
     } else {
       setToggleUserList(true);
     }
-  }, [params?.userId]);
+  }, [params?.id]);
 
   useEffect(() => {
     dispatch(flushMessages());
@@ -81,7 +102,7 @@ const ChatPage = () => {
       document.body.appendChild(openButton);
     });
   };
-
+  
   useEffect(() => {
     if (socket) {
       socket.on('RECEIVE_MESSAGE', (data: ISingleUserChat) => {
@@ -95,9 +116,7 @@ const ChatPage = () => {
           }
           new Audio(audioUrl).play();
         } else {
-          const userId = location.href.split('/chat')[1]
-            ? String(location.href.split('/chat')[1])?.replace('/', '')
-            : '';
+          const userId = params?.id;
 
           if (userId !== data?.senderId) {
             const user = getUserByUserId(data?.senderId);
@@ -120,12 +139,24 @@ const ChatPage = () => {
         }
       });
 
+      socket.on('RECIEVE_GROUP_MESSAGE', (data) => {
+        const { groupId, message, senderId } = data;
+
+        dispatch(
+          pushNewGroupChatMessage({
+            id: groupId,
+            chat: { message, senderId, sentAt: new Date().toISOString() },
+          })
+        );
+      });
+
       socket.on('UPDATED_ONLINE_USERS', (data: string[]) => {
         setOnlieUsersList(data);
       });
 
       return () => {
         socket.off('RECEIVE_MESSAGE');
+        socket.off('RECIEVE_GROUP_MESSAGE');
         socket.off('UPDATED_ONLINE_USERS');
       };
     }
@@ -133,17 +164,41 @@ const ChatPage = () => {
 
   const sendMessage = (message: string) => {
     if (socket) {
-      const payload: ISingleUserChat = {
-        message: message,
-        receiverId: currentChatUser?._id ?? '',
-        sentAt: new Date().toISOString(),
-        senderId: authState?.user?._id ?? '',
-      };
-      dispatch(pushNewMessage({ id: payload?.receiverId, chat: payload }));
-      socket.emit('SEND_MESSAGE', payload);
+      if (params?.chatType === ChatTypeEnum.USER) {
+        sendUserMessage(message);
+      } else {
+        sendGroupChatMessage(message);
+      }
       // new Audio(audioUrl).play();
       messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const sendUserMessage = (message: string) => {
+    const payload: ISingleUserChat = {
+      message: message,
+      receiverId: currentChatUser?._id ?? '',
+      sentAt: new Date().toISOString(),
+      senderId: authState?.user?._id ?? '',
+    };
+    dispatch(pushNewMessage({ id: payload?.receiverId, chat: payload }));
+    socket.emit('SEND_MESSAGE', payload);
+  };
+
+  const sendGroupChatMessage = (message: string) => {
+    const payload: IChat = {
+      message: message,
+      sentAt: new Date().toISOString(),
+      senderId: authState?.user?._id ?? '',
+    };
+    // dispatch(
+    //   pushNewGroupChatMessage({ id: currentChatGroup?._id, chat: payload })
+    // );
+
+    socket.emit('SEND_GROUP_MESSAGE', {
+      groupId: currentChatGroup?._id,
+      payload: payload,
+    });
   };
 
   const chatUser: chatUser = {
@@ -155,6 +210,10 @@ const ChatPage = () => {
     setToggleUserList(true);
     navigate('/');
   };
+  const isGroupChat = params?.chatType === ChatTypeEnum.GROUP_CHAT;
+  const chatMessages = isGroupChat
+    ? chatState?.chatGroupMessages?.[currentChatGroup?._id]
+    : chatState?.chats[currentChatUser?._id];
 
   return (
     <div className="h-full">
@@ -167,15 +226,20 @@ const ChatPage = () => {
           />
         </div>
 
-        {currentChatUser && !toggleUserList && (
+        {(currentChatUser || currentChatGroup) && !toggleUserList && (
           <>
             <CurrentChatWindow
+              isGroupChat={isGroupChat}
               messageContainerRef={messageContainerRef}
               chatUser={chatUser}
-              messages={chatState?.chats[currentChatUser?._id]}
+              messages={chatMessages}
               user={authState?.user!}
               sendMessage={sendMessage}
               openUserList={openUserList}
+              chatGroupInfo={{
+                userList: currentChatGroup?.userList,
+                name: currentChatGroup?.name,
+              }}
             />
           </>
         )}

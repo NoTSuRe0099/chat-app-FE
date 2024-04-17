@@ -65,8 +65,9 @@ const callApi = async <T>(
 
     return { data };
   } catch (error: any) {
-    const errorMessage = handleApiError(error);
-    return { data: null, error: errorMessage };
+    handleApiError(error);
+    console.error('Error in API call:', error); // Log the actual error object for debugging
+    throw error;
   }
 };
 

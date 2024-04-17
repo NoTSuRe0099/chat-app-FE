@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useSocket } from '../../context/SocketContext';
 import callApi from '../../functions/apiClient';
+import { useDispatch } from 'react-redux';
+import { fetchMyChatgroups } from '../../Actions/ChatActions';
 
 interface Iprops {
   isModalOpen: boolean;
@@ -11,15 +13,18 @@ const CreateGroupChatModal = (props: Iprops) => {
   const { isModalOpen, closeModal } = props;
   const [groupName, setGroupName] = useState('');
   const { socket } = useSocket();
+  const dispatch = useDispatch();
 
   const createNewChatGroup = async () => {
     await callApi({
       url: '/chat/createNewChatGroup',
       method: 'POST',
-      data: {},
+      data: { name: groupName },
     }).then((response) => {
       //@ts-ignore
       const group = response.data?.data;
+      //@ts-ignore
+      dispatch(fetchMyChatgroups());
       socket.emit('JOIN_GROUP', { groupId: group?._id });
       closeModal();
     });
