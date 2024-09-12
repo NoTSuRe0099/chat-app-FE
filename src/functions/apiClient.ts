@@ -35,7 +35,7 @@ const handleApiError = (error: AxiosError) => {
       }
 
       // @ts-ignore
-      toast.error(data?.message);
+      if (data?.message) toast.error(data?.message);
     } else if (axiosError.request) {
       errorMessage = 'No response received from the server';
     } else {

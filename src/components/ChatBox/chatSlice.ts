@@ -13,6 +13,8 @@ const initialState: IChatState = {
   currentChat: [],
   chatGroups: [],
   chatGroupMessages: {},
+  usersForGroupInvt: [],
+  currentUsersGroupInvites: []
 };
 
 const ChatSlice = createSlice({
@@ -33,6 +35,12 @@ const ChatSlice = createSlice({
     },
     setMyChatgroups: (state, action: PayloadAction<any>) => {
       state.chatGroups = action?.payload;
+    },
+    setGroupChatUserForInvite: (state, action: PayloadAction<any>) => {
+      state.usersForGroupInvt = action?.payload;
+    },
+    setGroupChatInvites: (state, action: PayloadAction<any>) => {
+      state.currentUsersGroupInvites = action?.payload;
     },
     pushNewMessage: (state, action: PayloadAction<any>) => {
       const { id, chat } = action.payload;
@@ -74,6 +82,8 @@ export const {
   pushNewMessage,
   setMyChatgroups,
   pushNewGroupChatMessage,
+  setGroupChatUserForInvite,
+  setGroupChatInvites
 } = ChatSlice.actions;
 
 // Selector to access auth state

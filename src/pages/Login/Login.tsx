@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { selectAuth } from '../../auth/AuthSlice';
 import { loginAction } from '../../Actions/AuthActions';
 
@@ -43,11 +43,11 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-6 bg-gray-100 rounded-md">
-      <h2 className="text-2xl font-bold mb-4">Login Form</h2>
+    <div className="max-w-md mx-auto mt-8 p-6 bg-gray-100 rounded-md shadow-md">
+      <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block mb-1">
+          <label htmlFor="email" className="block mb-1 font-medium">
             Email:
           </label>
           <input
@@ -61,7 +61,7 @@ const LoginForm: React.FC = () => {
           />
         </div>
         <div>
-          <label htmlFor="password" className="block mb-1">
+          <label htmlFor="password" className="block mb-1 font-medium">
             Password:
           </label>
           <input
@@ -81,6 +81,19 @@ const LoginForm: React.FC = () => {
           Login
         </button>
       </form>
+
+      {/* Register Link */}
+      <div className="text-center mt-4">
+        <p className="text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link
+            to="/register"
+            className="text-blue-500 hover:text-blue-700 font-medium"
+          >
+            Register here
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

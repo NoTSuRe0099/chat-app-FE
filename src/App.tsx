@@ -44,9 +44,9 @@ import Register from './pages/Register/Register';
 const App: React.FC = (props: any) => {
   const dispatch = useDispatch();
   const [timer, setTimer] = useState(0);
-  const [isFlushMessagesOn, setIsFlushMessagesOn] = useState(true);
+  const [isFlushMessagesOn, setIsFlushMessagesOn] = useState(false);
 
-  const flushInterval = 40;
+  const flushInterval = 120; // 40 sec
 
   useEffect(() => {
     if (isFlushMessagesOn) {

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchAllUser } from '../../Actions/ChatActions';
+import { fetchAllUser, fetchGroupChatInvites } from '../../Actions/ChatActions';
 import {
   IChat,
   ISingleUserChat,
@@ -102,43 +102,59 @@ const ChatPage = () => {
       document.body.appendChild(openButton);
     });
   };
-  
+
+  const showNotification = (
+    title: string,
+    body: string,
+    navigateTo: string,
+    userId?: string
+  ) => {
+    if (document.hidden) {
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body });
+      }
+      new Audio(audioUrl)?.play();
+    } else {
+      toast((t) => (
+        <span className="flex gap-2 items-center">
+          {body}
+          {userId && (
+            <button
+              className="px-3 py-2 font-medium bg-blue-50 hover:bg-blue-100 hover:text-blue-600 text-blue-500 rounded-lg text-sm"
+              onClick={() => {
+                navigate(navigateTo);
+                toast.dismiss(t?.id);
+              }}
+            >
+              Open Chat
+            </button>
+          )}
+        </span>
+      ));
+    }
+  };
+
   useEffect(() => {
     if (socket) {
+      // Handler for individual messages
       socket.on('RECEIVE_MESSAGE', (data: ISingleUserChat) => {
         dispatch(pushNewMessage({ id: data?.senderId, chat: data }));
-        //? auto Scroll
         messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
 
-        if (document.hidden) {
-          if (Notification.permission === 'granted') {
-            sendNotification(data);
-          }
-          new Audio(audioUrl).play();
-        } else {
-          const userId = params?.id;
+        const userId = params?.id;
 
-          if (userId !== data?.senderId) {
-            const user = getUserByUserId(data?.senderId);
-
-            toast((t) => (
-              <span className="flex gap-2 items-center">
-                New Message from <b>{user?.name}</b>
-                <button
-                  className="px-3 py-2 font-medium bg-blue-50 hover:bg-blue-100 hover:text-blue-600 text-blue-500 rounded-lg text-sm"
-                  onClick={() => {
-                    navigate(`/chat/${data?.senderId}`);
-                    toast.dismiss(t.id);
-                  }}
-                >
-                  Open Chat
-                </button>
-              </span>
-            ));
-          }
+        if (userId !== data?.senderId) {
+          const user = getUserByUserId(data?.senderId);
+          showNotification(
+            'New Message',
+            `New Message from ${user?.name}`,
+            `/chat/user/${data?.senderId}`,
+            data?.senderId
+          );
         }
       });
 
+      // Handler for group messages
       socket.on('RECIEVE_GROUP_MESSAGE', (data) => {
         const { groupId, message, senderId } = data;
 
@@ -148,19 +164,36 @@ const ChatPage = () => {
             chat: { message, senderId, sentAt: new Date().toISOString() },
           })
         );
+        if (senderId !== authState?.user?._id) {
+          showNotification(
+            'New Group Message',
+            `Message from ${getUserByUserId(senderId)?.name}`,
+            `/chat/group/${groupId}`,
+            senderId
+          );
+        }
       });
 
+      // Handler for updated online users
       socket.on('UPDATED_ONLINE_USERS', (data: string[]) => {
         setOnlieUsersList(data);
       });
 
+      socket.on('NEW_GROUP_INVITATION', (data) => {
+        //@ts-ignore
+        dispatch(fetchGroupChatInvites());
+        new Audio(audioUrl)?.play();
+        console.log('NEW_GROUP_CREATED', data);
+      });
+
+      // Cleanup on component unmount
       return () => {
         socket.off('RECEIVE_MESSAGE');
         socket.off('RECIEVE_GROUP_MESSAGE');
         socket.off('UPDATED_ONLINE_USERS');
       };
     }
-  }, [socket]);
+  }, [socket, params?.id]);
 
   const sendMessage = (message: string) => {
     if (socket) {
@@ -239,6 +272,7 @@ const ChatPage = () => {
               chatGroupInfo={{
                 userList: currentChatGroup?.userList,
                 name: currentChatGroup?.name,
+                _id: currentChatGroup?._id,
               }}
             />
           </>

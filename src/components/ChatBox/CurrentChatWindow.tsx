@@ -1,6 +1,12 @@
 import { useState } from 'react';
-import { IChat, ISingleUserChat, User } from '../../Types/chatSliceTypes';
-
+import {
+  IChat,
+  IgroupChats,
+  ISingleUserChat,
+  User,
+} from '../../Types/chatSliceTypes';
+import addUserIcon from '../../assets/addUserIcon.svg';
+import GroupChatInviteModal from '../GroupChatInviteModal/GroupChatInviteModal';
 export interface chatUser extends User {
   isOnline: boolean;
 }
@@ -13,10 +19,7 @@ interface Iprops {
   messageContainerRef: React.MutableRefObject<any> | null;
   openUserList: () => void;
   isGroupChat: boolean;
-  chatGroupInfo?: {
-    userList: string[];
-    name: string;
-  };
+  chatGroupInfo?: IgroupChats;
 }
 
 const CurrentChatWindow = (props: Iprops) => {
@@ -37,44 +40,72 @@ const CurrentChatWindow = (props: Iprops) => {
     setMessage('');
   };
 
+  const [isInvtUserModalOpen, setIsInvtUserModalOpen] = useState(false);
+
+  const openUserInvtModal = () => {
+    setIsInvtUserModalOpen(true);
+  };
+
+  const closeUserInvtModal = () => {
+    setIsInvtUserModalOpen(false);
+  };
+
+  const getUserDetailsById = (userId: string) => {
+    return chatGroupInfo.userList?.find((user) => user?._id === userId);
+  };
+
   return (
     <>
+      {isInvtUserModalOpen && (
+        <GroupChatInviteModal
+          onClose={closeUserInvtModal}
+          groupId={chatGroupInfo?._id}
+        />
+      )}
       <div className="w-full flex flex-col justify-between h-full">
-        <div className="relative flex items-center p-3 border-b border-gray-300">
-          <button className="md:hidden" onClick={openUserList}>
-            <svg
-              height="25"
-              viewBox="0 0 48 48"
-              width="48"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M0 0h48v48h-48z" fill="none" />
-              <path d="M40 22h-24.34l11.17-11.17-2.83-2.83-16 16 16 16 2.83-2.83-11.17-11.17h24.34v-4z" />
-            </svg>
-          </button>
-          {!isGroupChat && (
-            <div className="relative">
-              <img
-                className="object-cover w-10 h-10 rounded-full"
-                src="https://static.vecteezy.com/system/resources/previews/026/619/142/non_2x/default-avatar-profile-icon-of-social-media-user-photo-image-vector.jpg"
-                alt="username"
-              />
-              <span
-                className={`absolute w-3 h-3 ${
-                  chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
-                } rounded-full left-6 top-1`}
-              ></span>
-            </div>
-          )}
+        <div className="relative flex items-center justify-between p-3 border-b border-gray-300">
+          <div className="flex items-center ">
+            <button className="md:hidden" onClick={openUserList}>
+              <svg
+                height="25"
+                viewBox="0 0 48 48"
+                width="48"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M0 0h48v48h-48z" fill="none" />
+                <path d="M40 22h-24.34l11.17-11.17-2.83-2.83-16 16 16 16 2.83-2.83-11.17-11.17h24.34v-4z" />
+              </svg>
+            </button>
+            {!isGroupChat && (
+              <div className="relative">
+                <img
+                  className="object-cover w-10 h-10 rounded-full"
+                  src="https://static.vecteezy.com/system/resources/previews/026/619/142/non_2x/default-avatar-profile-icon-of-social-media-user-photo-image-vector.jpg"
+                  alt="username"
+                />
+                <span
+                  className={`absolute w-3 h-3 ${
+                    chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
+                  } rounded-full left-6 top-1`}
+                ></span>
+              </div>
+            )}
 
-          <span className="block ml-2 font-bold text-gray-600">
-            {isGroupChat ? chatGroupInfo?.name : chatUser?.name || 'NA'}
-          </span>
+            <span className="block ml-2 font-bold text-gray-600">
+              {isGroupChat ? chatGroupInfo?.name : chatUser?.name || 'NA'}
+            </span>
+          </div>
+
+          {isGroupChat && (
+            <button onClick={openUserInvtModal}>
+              <img className="h-4" src={addUserIcon} alt="Add User" />
+            </button>
+          )}
         </div>
 
-        <div className="relative w-full p-6 overflow-y-auto h-full">
+        <div className="relative w-full p-6 overflow-y-auto h-full bg-gray-50">
           {messages?.length ? (
-            <ul className="space-y-2">
+            <ul className="space-y-4">
               {messages?.map((chat, index: number) => (
                 <li
                   key={`_${index}`}
@@ -84,14 +115,26 @@ const CurrentChatWindow = (props: Iprops) => {
                       : 'justify-start'
                   }`}
                 >
-                  <div className="relative max-w-xl px-4 py-2 text-gray-700 rounded shadow">
-                    <span className="block">{chat?.message}</span>
+                  <div className="relative max-w-xl md:w-auto break-words px-5 py-3 bg-white rounded-lg shadow-lg h-auto">
+                    <span className="block text-sm font-medium text-gray-900 mb-1">
+                      {chat?.senderId === user?._id
+                        ? 'You'
+                        : getUserDetailsById(chat?.senderId)?.name}
+                    </span>
+                    <p className="block text-gray-700 w-max text-left">{chat?.message}</p>
+                    <span className="block mt-2 text-xs text-gray-500">
+                      {new Date(chat?.sentAt)?.toLocaleDateString()}
+                    </span>
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <div>No Messages</div>
+            <div className="flex items-center justify-center h-full text-center">
+              <p className="text-lg font-semibold text-gray-500">
+                No messages to display.
+              </p>
+            </div>
           )}
           <div ref={messageContainerRef} />
         </div>
