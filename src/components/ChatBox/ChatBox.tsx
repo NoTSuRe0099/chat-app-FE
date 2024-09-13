@@ -15,6 +15,7 @@ import CurrentChatWindow, { chatUser } from './CurrentChatWindow';
 import UserList from './UserList';
 import {
   flushMessages,
+  pushNewCurrentChat,
   pushNewGroupChatMessage,
   pushNewMessage,
   selectChatState,
@@ -38,6 +39,10 @@ const ChatPage = () => {
   const [currentChatGroup, setCurrentChatGroup] = useState<IgroupChats | null>(
     null
   );
+  const chatUser: chatUser = {
+    ...currentChatUser!,
+    isOnline: onlieUsersList?.includes(currentChatUser?._id!),
+  };
 
   useEffect(() => {
     if (params?.id && params?.chatType === ChatTypeEnum.USER) {
@@ -133,12 +138,21 @@ const ChatPage = () => {
       ));
     }
   };
-
+  console.log('fesfsefsefsefesfesf');
   useEffect(() => {
     if (socket) {
       // Handler for individual messages
-      socket.on('RECEIVE_MESSAGE', (data: ISingleUserChat) => {
+      socket?.on('RECEIVE_MESSAGE', (data: ISingleUserChat) => {
+        console.log('user data', data);
         dispatch(pushNewMessage({ id: data?.senderId, chat: data }));
+        dispatch(
+          pushNewCurrentChat({
+            ...data,
+            _id: crypto.randomUUID(),
+            type: ChatTypeEnum.USER,
+          })
+        );
+
         messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
 
         const userId = params?.id;
@@ -155,9 +169,17 @@ const ChatPage = () => {
       });
 
       // Handler for group messages
-      socket.on('RECIEVE_GROUP_MESSAGE', (data) => {
+      socket?.on('RECIEVE_GROUP_MESSAGE', (data) => {
         const { groupId, message, senderId } = data;
+        console.log('group data', data);
 
+        dispatch(
+          pushNewCurrentChat({
+            ...data,
+            _id: crypto.randomUUID(),
+            type: ChatTypeEnum.GROUP_CHAT,
+          })
+        );
         dispatch(
           pushNewGroupChatMessage({
             id: groupId,
@@ -175,11 +197,11 @@ const ChatPage = () => {
       });
 
       // Handler for updated online users
-      socket.on('UPDATED_ONLINE_USERS', (data: string[]) => {
+      socket?.on('UPDATED_ONLINE_USERS', (data: string[]) => {
         setOnlieUsersList(data);
       });
 
-      socket.on('NEW_GROUP_INVITATION', (data) => {
+      socket?.on('NEW_GROUP_INVITATION', (data) => {
         //@ts-ignore
         dispatch(fetchGroupChatInvites());
         new Audio(audioUrl)?.play();
@@ -188,12 +210,12 @@ const ChatPage = () => {
 
       // Cleanup on component unmount
       return () => {
-        socket.off('RECEIVE_MESSAGE');
-        socket.off('RECIEVE_GROUP_MESSAGE');
-        socket.off('UPDATED_ONLINE_USERS');
+        socket?.off('RECEIVE_MESSAGE');
+        socket?.off('RECIEVE_GROUP_MESSAGE');
+        socket?.off('UPDATED_ONLINE_USERS');
       };
     }
-  }, [socket, params?.id]);
+  }, [socket, params?.id, chatUser?._id, dispatch]);
 
   const sendMessage = (message: string) => {
     if (socket) {
@@ -215,7 +237,14 @@ const ChatPage = () => {
       senderId: authState?.user?._id ?? '',
     };
     dispatch(pushNewMessage({ id: payload?.receiverId, chat: payload }));
-    socket.emit('SEND_MESSAGE', payload);
+    dispatch(
+      pushNewCurrentChat({
+        ...payload,
+        _id: crypto.randomUUID(),
+        type: ChatTypeEnum.USER,
+      })
+    );
+    socket?.emit('SEND_MESSAGE', payload);
   };
 
   const sendGroupChatMessage = (message: string) => {
@@ -228,15 +257,17 @@ const ChatPage = () => {
     //   pushNewGroupChatMessage({ id: currentChatGroup?._id, chat: payload })
     // );
 
-    socket.emit('SEND_GROUP_MESSAGE', {
+    dispatch(
+      pushNewCurrentChat({
+        ...payload,
+        _id: crypto.randomUUID(),
+        type: ChatTypeEnum.GROUP_CHAT,
+      })
+    );
+    socket?.emit('SEND_GROUP_MESSAGE', {
       groupId: currentChatGroup?._id,
       payload: payload,
     });
-  };
-
-  const chatUser: chatUser = {
-    ...currentChatUser!,
-    isOnline: onlieUsersList?.includes(currentChatUser?._id!),
   };
 
   const openUserList = () => {

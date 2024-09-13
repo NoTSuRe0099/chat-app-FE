@@ -4,6 +4,7 @@ import {
   setAllUsers,
   setGroupChatUserForInvite,
   setGroupChatInvites,
+  loadCurrentChat,
 } from '../components/ChatBox/chatSlice';
 import callApi from '../functions/apiClient';
 
@@ -84,6 +85,21 @@ export const groupInvitationAction = createAsyncThunk(
     thunkAPI.dispatch(fetchGroupChatInvites());
     //@ts-ignore
     thunkAPI.dispatch(fetchMyChatgroups());
+
+    return response.data;
+  }
+);
+
+
+export const loadChatsAction = createAsyncThunk(
+  '/chat/loadChats',
+  async (params: any, thunkAPI) => {
+    const response: any = await callApi({
+      method: 'GET',
+      url: `/chat/loadChats${params?.queryParams}`,
+    });
+    //@ts-ignore
+    thunkAPI.dispatch(loadCurrentChat(response?.data?.data));
 
     return response.data;
   }

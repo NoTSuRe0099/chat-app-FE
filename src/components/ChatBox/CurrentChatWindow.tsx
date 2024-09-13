@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   IChat,
   IgroupChats,
@@ -7,6 +7,15 @@ import {
 } from '../../Types/chatSliceTypes';
 import addUserIcon from '../../assets/addUserIcon.svg';
 import GroupChatInviteModal from '../GroupChatInviteModal/GroupChatInviteModal';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  clearCurrentChat,
+  incrementChatLoadPage,
+  selectChatState,
+} from './chatSlice';
+import { loadChatsAction } from '../../Actions/ChatActions';
+import { ChatTypeEnum } from '../../Enums';
+import { useSocket } from '../../context/SocketContext';
 export interface chatUser extends User {
   isOnline: boolean;
 }
@@ -34,6 +43,15 @@ const CurrentChatWindow = (props: Iprops) => {
     chatGroupInfo,
   } = props;
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const scrollableDivRef = useRef<HTMLDivElement>(null);
+  const dispatch = useDispatch();
+  const chatState = useSelector(selectChatState);
+  const { currentChat } = chatState;
+  const { pagination, chats } = currentChat;
+  const { page, limit } = pagination;
+
+  console.log('chats', chats);
 
   const handleSubmitMessage = () => {
     sendMessage(message);
@@ -53,6 +71,87 @@ const CurrentChatWindow = (props: Iprops) => {
   const getUserDetailsById = (userId: string) => {
     return chatGroupInfo.userList?.find((user) => user?._id === userId);
   };
+
+  // Function to load more data when scroll reaches the bottom
+  const loadMoreData = useCallback(async () => {
+    dispatch(
+      //@ts-ignore
+      loadChatsAction({
+        queryParams: `?type=${
+          isGroupChat ? ChatTypeEnum.GROUP_CHAT : ChatTypeEnum.USER
+        }&receiverId=${chatUser._id}&page=${page || 1}&limit=${15}`,
+      })
+    );
+
+    console.log('loading new Data');
+  }, [page, chatUser?._id]);
+
+  useEffect(() => {
+    console.log('oiiii');
+
+    loadMoreData();
+    messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatUser?._id]);
+
+  // Handler for scroll event
+  const handleScroll = useCallback(() => {
+    const div = scrollableDivRef.current;
+    if (div) {
+      // Check if user has scrolled to the top
+      if (div.scrollTop === 0 && !loading) {
+        // loadMoreData();
+        // if (page === limit) {
+        dispatch(incrementChatLoadPage());
+        // }
+      }
+    }
+  }, [loading, loadMoreData]);
+
+  useEffect(() => {
+    const div = scrollableDivRef.current;
+    if (div) {
+      div.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (div) {
+        div.removeEventListener('scroll', handleScroll);
+      }
+      dispatch(clearCurrentChat());
+    };
+  }, [handleScroll]);
+
+  const [isInputFucused, setIsInputFocused] = useState(false);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (socket) {
+      socket?.on('IS_USER_TYPING', (data) => {
+        console.log('IS_USER_TYPING', data);
+      });
+    }
+
+    return () => {
+      bluredHandler();
+    };
+  }, [socket]);
+
+  const fucusedHandler = () => {
+    socket?.emit('IS_USER_TYPING', {
+      senderId: user?._id,
+      receiverId: chatUser?._id,
+      isTyping: true,
+    });
+  };
+
+  const bluredHandler = () => {
+    socket?.emit('IS_USER_TYPING', {
+      senderId: user?._id,
+      receiverId: chatUser?._id,
+      isTyping: false,
+    });
+  };
+
+  console.log('isInputFucused', isInputFucused);
 
   return (
     <>
@@ -103,10 +202,20 @@ const CurrentChatWindow = (props: Iprops) => {
           )}
         </div>
 
-        <div className="relative w-full p-6 overflow-y-auto h-full bg-gray-50">
-          {messages?.length ? (
+        <div
+          ref={scrollableDivRef}
+          style={{
+            // height: '300px',
+            // width: '400px',
+            overflowY: 'scroll',
+            border: '1px solid #ccc',
+            padding: '10px',
+          }}
+          className="relative w-full p-6 overflow-y-auto h-full bg-gray-50"
+        >
+          {chats?.length ? (
             <ul className="space-y-4">
-              {messages?.map((chat, index: number) => (
+              {chats?.map((chat, index: number) => (
                 <li
                   key={`_${index}`}
                   className={`flex ${
@@ -121,7 +230,9 @@ const CurrentChatWindow = (props: Iprops) => {
                         ? 'You'
                         : getUserDetailsById(chat?.senderId)?.name}
                     </span>
-                    <p className="block text-gray-700 w-max text-left">{chat?.message}</p>
+                    <p className="block text-gray-700 w-max text-left">
+                      {chat?.message}
+                    </p>
                     <span className="block mt-2 text-xs text-gray-500">
                       {new Date(chat?.sentAt)?.toLocaleDateString()}
                     </span>
@@ -187,6 +298,14 @@ const CurrentChatWindow = (props: Iprops) => {
             className="block w-full py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700"
             name="message"
             required
+            onFocus={() => {
+              fucusedHandler();
+              setIsInputFocused(true);
+            }}
+            onBlur={() => {
+              bluredHandler();
+              setIsInputFocused(false);
+            }}
           />
           <button type="button">
             <svg

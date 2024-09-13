@@ -1,7 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '../../auth/AuthSlice';
 import { RootState } from '../../store';
-import { IChatState, ISingleUserChat } from '../../Types/chatSliceTypes';
+import {
+  IChatState,
+  ICurrentChat,
+  ICurrentChats,
+  ISingleUserChat,
+} from '../../Types/chatSliceTypes';
 
 const storedUserList = sessionStorage.getItem('userList')
   ? JSON.parse(sessionStorage.getItem('userList'))
@@ -10,11 +15,19 @@ const storedUserList = sessionStorage.getItem('userList')
 const initialState: IChatState = {
   users: storedUserList || [],
   chats: {},
-  currentChat: [],
+  currentChat: {
+    pagination: {
+      limit: 0,
+      page: 1,
+      total: 0,
+      totalPages: 0,
+    },
+    chats: [],
+  },
   chatGroups: [],
   chatGroupMessages: {},
   usersForGroupInvt: [],
-  currentUsersGroupInvites: []
+  currentUsersGroupInvites: [],
 };
 
 const ChatSlice = createSlice({
@@ -26,12 +39,25 @@ const ChatSlice = createSlice({
         sessionStorage.setItem('userList', JSON.stringify(action?.payload));
       state.users = action?.payload || [];
     },
-    pushNewCurrentChat: (state, action: PayloadAction<ISingleUserChat>) => {
-      state.currentChat = [...state.currentChat, action?.payload];
+    loadCurrentChat: (state, action: PayloadAction<ICurrentChat>) => {
+      const _chats = [...state?.currentChat?.chats, ...action?.payload?.chats];
+      //@ts-ignore
+      state.currentChat.chats = _chats;
+      state.currentChat.pagination = action?.payload?.pagination;
+    },
+    pushNewCurrentChat: (state, action: PayloadAction<ICurrentChats>) => {
+      console.log('action?.payload', action?.payload);
+      state.currentChat.chats = [...state.currentChat.chats, action.payload];
+    },
+    clearCurrentChat: (state, action: PayloadAction<ISingleUserChat>) => {
+      state.currentChat = initialState.currentChat;
     },
     flushMessages: (state) => {
-      state.currentChat = [];
+      state.currentChat = initialState.currentChat;
       state.chats = {};
+    },
+    incrementChatLoadPage: (state) => {
+      state.currentChat.pagination.page += 1;
     },
     setMyChatgroups: (state, action: PayloadAction<any>) => {
       state.chatGroups = action?.payload;
@@ -46,25 +72,16 @@ const ChatSlice = createSlice({
       const { id, chat } = action.payload;
       const _id = String(id);
       const _chats = { ...state?.chats };
-      //@ts-ignore
       _chats[_id] = _chats[_id]?.length > 0 ? [..._chats[_id], chat] : [chat];
+
+      console.log('oiiiiiiiiiiiiiiiiiiiii');
 
       state.chats = _chats;
     },
     pushNewGroupChatMessage: (state, action: PayloadAction<any>) => {
       const { id, chat } = action.payload;
       const chatGroupMessages = { ...state.chatGroupMessages };
-
-      // const index = _chatGroups?.findIndex((group) => group?._id === id);
-
-      // if (index !== -1) {
-      //   _chatGroups[index].messages = chat;
-      // }
-
-      // state.chatGroups = _chatGroups;
-
       const _id = String(id);
-      //@ts-ignore
       chatGroupMessages[_id] =
         chatGroupMessages[_id]?.length > 0
           ? [...chatGroupMessages?.[_id], chat]
@@ -77,13 +94,16 @@ const ChatSlice = createSlice({
 
 export const {
   setAllUsers,
-  pushNewCurrentChat,
+  loadCurrentChat,
   flushMessages,
   pushNewMessage,
   setMyChatgroups,
   pushNewGroupChatMessage,
   setGroupChatUserForInvite,
-  setGroupChatInvites
+  setGroupChatInvites,
+  clearCurrentChat,
+  incrementChatLoadPage,
+  pushNewCurrentChat,
 } = ChatSlice.actions;
 
 // Selector to access auth state

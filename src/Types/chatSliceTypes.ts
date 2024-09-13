@@ -7,7 +7,6 @@ export interface IChats {
   [key: string]: ISingleUserChat[];
 }
 
-
 export interface IgroupChats {
   name: string;
   _id: string;
@@ -34,7 +33,7 @@ export interface IUsersForGroupInvt {
 export interface IChatState {
   users: User[];
   chats: IChats;
-  currentChat: ISingleUserChat[];
+  currentChat: ICurrentChat;
   chatGroups: IgroupChats[];
   chatGroupMessages: IChatGroupMessages;
   usersForGroupInvt: IUsersForGroupInvt[];
@@ -60,4 +59,23 @@ export interface IGroupInvites {
   createdAt: string;
   sender_details: IUserDetails;
   group_details: IGroupDetails;
+}
+
+export interface IPagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ICurrentChats extends IChat {
+  _id: string;
+  groupId?: string;
+  receiverId?: string;
+  type: string;
+}
+
+export interface ICurrentChat {
+  pagination: IPagination;
+  chats: ICurrentChats[];
 }
