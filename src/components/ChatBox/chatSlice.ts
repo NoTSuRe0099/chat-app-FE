@@ -28,6 +28,7 @@ const initialState: IChatState = {
   chatGroupMessages: {},
   usersForGroupInvt: [],
   currentUsersGroupInvites: [],
+  activlyTypingUserList: new Set([]),
 };
 
 const ChatSlice = createSlice({
@@ -46,7 +47,6 @@ const ChatSlice = createSlice({
       state.currentChat.pagination = action?.payload?.pagination;
     },
     pushNewCurrentChat: (state, action: PayloadAction<ICurrentChats>) => {
-      console.log('action?.payload', action?.payload);
       state.currentChat.chats = [...state.currentChat.chats, action.payload];
     },
     clearCurrentChat: (state, action: PayloadAction<ISingleUserChat>) => {
@@ -74,8 +74,6 @@ const ChatSlice = createSlice({
       const _chats = { ...state?.chats };
       _chats[_id] = _chats[_id]?.length > 0 ? [..._chats[_id], chat] : [chat];
 
-      console.log('oiiiiiiiiiiiiiiiiiiiii');
-
       state.chats = _chats;
     },
     pushNewGroupChatMessage: (state, action: PayloadAction<any>) => {
@@ -88,6 +86,19 @@ const ChatSlice = createSlice({
           : [chat];
 
       state.chatGroupMessages = chatGroupMessages;
+    },
+
+    changeIsTypingUserStatus: (state, action: PayloadAction<any>) => {
+      const { senderId, isTyping } = action.payload;
+      const _activlyTypingUserList = new Set([...state.activlyTypingUserList]);
+
+      if (!_activlyTypingUserList.has(senderId) && isTyping) {
+        _activlyTypingUserList.add(senderId);
+        state.activlyTypingUserList = _activlyTypingUserList;
+      } else {
+        _activlyTypingUserList.delete(senderId);
+        state.activlyTypingUserList = _activlyTypingUserList;
+      }
     },
   },
 });
@@ -104,6 +115,7 @@ export const {
   clearCurrentChat,
   incrementChatLoadPage,
   pushNewCurrentChat,
+  changeIsTypingUserStatus,
 } = ChatSlice.actions;
 
 // Selector to access auth state
