@@ -40,13 +40,15 @@ const ChatSlice = createSlice({
       state.users = action?.payload || [];
     },
     loadCurrentChat: (state, action: PayloadAction<ICurrentChat>) => {
-      const _chats = [...state?.currentChat?.chats, ...action?.payload?.chats];
+      console.log('asdasda', action?.payload);
+
+      const _chats = [...action?.payload?.chats, ...state?.currentChat?.chats];
       //@ts-ignore
       state.currentChat.chats = _chats;
       state.currentChat.pagination = action?.payload?.pagination;
     },
     pushNewCurrentChat: (state, action: PayloadAction<ICurrentChats>) => {
-      console.log('action?.payload', action?.payload);
+      console.log('asdasda333', action?.payload);
       state.currentChat.chats = [...state.currentChat.chats, action.payload];
     },
     clearCurrentChat: (state, action: PayloadAction<ISingleUserChat>) => {
@@ -57,6 +59,7 @@ const ChatSlice = createSlice({
       state.chats = {};
     },
     incrementChatLoadPage: (state) => {
+      console.log('asdasda222');
       state.currentChat.pagination.page += 1;
     },
     setMyChatgroups: (state, action: PayloadAction<any>) => {
@@ -73,9 +76,6 @@ const ChatSlice = createSlice({
       const _id = String(id);
       const _chats = { ...state?.chats };
       _chats[_id] = _chats[_id]?.length > 0 ? [..._chats[_id], chat] : [chat];
-
-      console.log('oiiiiiiiiiiiiiiiiiiiii');
-
       state.chats = _chats;
     },
     pushNewGroupChatMessage: (state, action: PayloadAction<any>) => {

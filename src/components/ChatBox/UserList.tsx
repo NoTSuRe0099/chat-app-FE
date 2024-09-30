@@ -11,7 +11,7 @@ import { ChatTypeEnum } from '../../Enums';
 import { User } from '../../Types/chatSliceTypes';
 import { selectAuth } from '../../auth/AuthSlice';
 import CreateGroupChatModal from '../CreateGroupChatModal/CreateGroupChatModal';
-import { selectChatState } from './chatSlice';
+import { clearCurrentChat, selectChatState } from './chatSlice';
 import { useSocket } from '../../context/SocketContext';
 import notificationIcon from '../../assets/notificationIcon.svg';
 import activeNotification from '../../assets/activeNotification.svg';
@@ -149,6 +149,7 @@ const UserList = (props: IProps) => {
               <Link
                 key={user?._id}
                 to={`/chat/${ChatTypeEnum.USER}/${user?._id}`}
+                onClick={() => dispatch(clearCurrentChat())}
                 className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
               >
                 <div className="relative flex items-center p-3">
@@ -185,9 +186,7 @@ const UserList = (props: IProps) => {
               <Link
                 key={group?._id}
                 to={`/chat/${ChatTypeEnum.GROUP_CHAT}/${group?._id}`}
-                // onClick={() =>
-                // navigate(`/chat/${ChatTypeEnum.GROUP_CHAT}/${group?._id}`)
-                // }
+                onClick={() => dispatch(clearCurrentChat())}
                 className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
               >
                 <div className="relative flex items-center p-3">

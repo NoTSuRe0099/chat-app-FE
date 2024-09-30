@@ -55,6 +55,7 @@ const ChatPage = () => {
         params?.chatType === ChatTypeEnum.GROUP_CHAT
           ? chatState?.chatGroups?.find((it) => it?._id === params?.id)
           : null;
+      console.log('groupChatState', groupChatState);
 
       setCurrentChatGroup(groupChatState);
       setToggleUserList(false);
