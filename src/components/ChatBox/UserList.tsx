@@ -31,7 +31,8 @@ const UserList = (props: IProps) => {
   const authState = useSelector(selectAuth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { chatGroups, currentUsersGroupInvites } = chatState;
+  const { chatGroups, currentUsersGroupInvites, activlyTypingUserList } =
+    chatState;
   const openCreateGroupModal = () => {
     setIsCreateGroupModalOpen(true);
   };
@@ -177,7 +178,15 @@ const UserList = (props: IProps) => {
                     </span> */}
                   </div>
                   <span className="block ml-2 text-sm text-gray-600">
-                    {getRecentMessage(user?._id) || 'No Messages'}
+                    {activlyTypingUserList?.has(user?._id) ? (
+                      <div className="typing-indicator mt-2">
+                        <span className="dot"></span>
+                        <span className="dot"></span>
+                        <span className="dot"></span>
+                      </div>
+                    ) : (
+                      getRecentMessage(user?._id) || 'No Messages'
+                    )}
                   </span>
                 </div>
               </Link>

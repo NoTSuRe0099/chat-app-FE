@@ -2,6 +2,7 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  isTyping?: boolean;
 }
 export interface IChats {
   [key: string]: ISingleUserChat[];
@@ -38,6 +39,7 @@ export interface IChatState {
   chatGroupMessages: IChatGroupMessages;
   usersForGroupInvt: IUsersForGroupInvt[];
   currentUsersGroupInvites: IGroupInvites[];
+  activlyTypingUserList: Set<string>
 }
 
 export interface IUserDetails {
@@ -78,4 +80,8 @@ export interface ICurrentChats extends IChat {
 export interface ICurrentChat {
   pagination: IPagination;
   chats: ICurrentChats[];
+}
+
+export interface chatUser extends User {
+  isOnline: boolean;
 }

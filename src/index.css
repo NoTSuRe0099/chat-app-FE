@@ -3,14 +3,42 @@
 @tailwind utilities;
 
 * {
-padding: 0;
-margin: 0;
-box-sizing: border-box;
--webkit-font-smoothing: antialiased;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
-   
-html,body {
-width: 100%;
-height: 100%;
-overflow-x: hidden;
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+.typing-indicator {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-left: 10px;
+  margin-bottom: 10px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  margin: 0 2px;
+  background-color: #999;
+  border-radius: 50%;
+  display: inline-block;
+  animation: fadeBlink 1.5s infinite ease-in-out;
+}
+
+@keyframes fadeBlink {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
 }

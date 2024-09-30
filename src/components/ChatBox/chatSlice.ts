@@ -28,6 +28,7 @@ const initialState: IChatState = {
   chatGroupMessages: {},
   usersForGroupInvt: [],
   currentUsersGroupInvites: [],
+  activlyTypingUserList: new Set([]),
 };
 
 const ChatSlice = createSlice({
@@ -48,7 +49,6 @@ const ChatSlice = createSlice({
       state.currentChat.pagination = action?.payload?.pagination;
     },
     pushNewCurrentChat: (state, action: PayloadAction<ICurrentChats>) => {
-      console.log('asdasda333', action?.payload);
       state.currentChat.chats = [...state.currentChat.chats, action.payload];
     },
     clearCurrentChat: (state, action: PayloadAction<ISingleUserChat>) => {
@@ -89,6 +89,19 @@ const ChatSlice = createSlice({
 
       state.chatGroupMessages = chatGroupMessages;
     },
+
+    changeIsTypingUserStatus: (state, action: PayloadAction<any>) => {
+      const { senderId, isTyping } = action.payload;
+      const _activlyTypingUserList = new Set([...state.activlyTypingUserList]);
+
+      if (!_activlyTypingUserList.has(senderId) && isTyping) {
+        _activlyTypingUserList.add(senderId);
+        state.activlyTypingUserList = _activlyTypingUserList;
+      } else {
+        _activlyTypingUserList.delete(senderId);
+        state.activlyTypingUserList = _activlyTypingUserList;
+      }
+    },
   },
 });
 
@@ -104,6 +117,7 @@ export const {
   clearCurrentChat,
   incrementChatLoadPage,
   pushNewCurrentChat,
+  changeIsTypingUserStatus,
 } = ChatSlice.actions;
 
 // Selector to access auth state

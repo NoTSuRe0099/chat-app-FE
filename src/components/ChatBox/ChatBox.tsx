@@ -8,10 +8,11 @@ import {
   ISingleUserChat,
   IgroupChats,
   User,
+  chatUser,
 } from '../../Types/chatSliceTypes';
 import { selectAuth } from '../../auth/AuthSlice';
 import { useSocket } from '../../context/SocketContext';
-import CurrentChatWindow, { chatUser } from './CurrentChatWindow';
+import CurrentChatWindow from './CurrentChatWindow';
 import UserList from './UserList';
 import {
   flushMessages,

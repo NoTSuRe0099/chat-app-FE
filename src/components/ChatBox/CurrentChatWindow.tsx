@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  chatUser,
   IChat,
   IgroupChats,
   ISingleUserChat,
@@ -9,6 +10,7 @@ import addUserIcon from '../../assets/addUserIcon.svg';
 import GroupChatInviteModal from '../GroupChatInviteModal/GroupChatInviteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import {
+  changeIsTypingUserStatus,
   clearCurrentChat,
   incrementChatLoadPage,
   selectChatState,
@@ -16,9 +18,6 @@ import {
 import { loadChatsAction } from '../../Actions/ChatActions';
 import { ChatTypeEnum } from '../../Enums';
 import { useSocket } from '../../context/SocketContext';
-export interface chatUser extends User {
-  isOnline: boolean;
-}
 
 interface Iprops {
   chatUser?: chatUser;
@@ -47,11 +46,9 @@ const CurrentChatWindow = (props: Iprops) => {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const chatState = useSelector(selectChatState);
-  const { currentChat } = chatState;
+  const { currentChat, activlyTypingUserList } = chatState;
   const { pagination, chats } = currentChat;
   const { page, limit } = pagination;
-
-  console.log('chats', chats);
 
   const handleSubmitMessage = () => {
     sendMessage(message);
@@ -82,13 +79,9 @@ const CurrentChatWindow = (props: Iprops) => {
         }&receiverId=${chatUser._id}&page=${page || 1}&limit=${15}`,
       })
     );
-
-    console.log('loading new Data');
   }, [page, chatUser?._id]);
 
   useEffect(() => {
-    console.log('oiiii');
-
     loadMoreData();
     messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatUser?._id]);
@@ -120,13 +113,13 @@ const CurrentChatWindow = (props: Iprops) => {
     };
   }, [handleScroll]);
 
-  const [isInputFucused, setIsInputFocused] = useState(false);
   const { socket } = useSocket();
 
   useEffect(() => {
     if (socket) {
       socket?.on('IS_USER_TYPING', (data) => {
-        console.log('IS_USER_TYPING', data);
+        const { senderId, isTyping } = data;
+        dispatch(changeIsTypingUserStatus({ senderId, isTyping }));
       });
     }
 
@@ -136,7 +129,7 @@ const CurrentChatWindow = (props: Iprops) => {
   }, [socket]);
 
   const fucusedHandler = () => {
-    socket?.emit('IS_USER_TYPING', {
+    socket?.emit('USER_TYPING', {
       senderId: user?._id,
       receiverId: chatUser?._id,
       isTyping: true,
@@ -144,14 +137,12 @@ const CurrentChatWindow = (props: Iprops) => {
   };
 
   const bluredHandler = () => {
-    socket?.emit('IS_USER_TYPING', {
+    socket?.emit('USER_TYPING', {
       senderId: user?._id,
       receiverId: chatUser?._id,
       isTyping: false,
     });
   };
-
-  console.log('isInputFucused', isInputFucused);
 
   return (
     <>
@@ -201,16 +192,8 @@ const CurrentChatWindow = (props: Iprops) => {
             </button>
           )}
         </div>
-
         <div
           ref={scrollableDivRef}
-          style={{
-            // height: '300px',
-            // width: '400px',
-            overflowY: 'scroll',
-            border: '1px solid #ccc',
-            padding: '10px',
-          }}
           className="relative w-full p-6 overflow-y-auto h-full bg-gray-50"
         >
           {chats?.length ? (
@@ -247,9 +230,18 @@ const CurrentChatWindow = (props: Iprops) => {
               </p>
             </div>
           )}
+
+          {/* Typing indicator */}
+          {activlyTypingUserList?.has(chatUser._id) && (
+            <div className="typing-indicator">
+              <span className="dot"></span>
+              <span className="dot"></span>
+              <span className="dot"></span>
+            </div>
+          )}
+
           <div ref={messageContainerRef} />
         </div>
-
         <form
           onSubmit={(e) => {
             e?.preventDefault();
@@ -300,11 +292,9 @@ const CurrentChatWindow = (props: Iprops) => {
             required
             onFocus={() => {
               fucusedHandler();
-              setIsInputFocused(true);
             }}
             onBlur={() => {
               bluredHandler();
-              setIsInputFocused(false);
             }}
           />
           <button type="button">
