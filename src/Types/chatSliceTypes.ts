@@ -39,7 +39,7 @@ export interface IChatState {
   chatGroupMessages: IChatGroupMessages;
   usersForGroupInvt: IUsersForGroupInvt[];
   currentUsersGroupInvites: IGroupInvites[];
-  activlyTypingUserList: Set<string>
+  activlyTypingUserList: { [key: string]: boolean };
 }
 
 export interface IUserDetails {

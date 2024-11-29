@@ -1,6 +1,7 @@
 import React from 'react';
 import Modal from '../Shared/Modal';
 import { IGroupInvites } from '../../Types/chatSliceTypes';
+import { generateInvitationMessage } from '../../functions/functions';
 
 interface IGroupInvitationsModal {
   onClose: () => void;
@@ -11,9 +12,7 @@ interface IGroupInvitationsModal {
 
 const GroupInvitationsModal: React.FC<IGroupInvitationsModal> = (props) => {
   const { onClose, title, groupInvites, groupInvitationActionHandler } = props;
-  const generateInvitationMessage = (invite: IGroupInvites): string => {
-    return `${invite.sender_details.name} has invited you to join the group "${invite.group_details.name}".`;
-  };
+
   return (
     <Modal onClose={onClose} title={title}>
       <table className="w-full border-collapse text-sm">

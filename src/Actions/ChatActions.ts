@@ -1,10 +1,10 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
-  setMyChatgroups,
-  setAllUsers,
-  setGroupChatUserForInvite,
-  setGroupChatInvites,
   loadCurrentChat,
+  setAllUsers,
+  setGroupChatInvites,
+  setGroupChatUserForInvite,
+  setMyChatgroups,
 } from '../components/ChatBox/chatSlice';
 import callApi from '../functions/apiClient';
 
@@ -69,6 +69,12 @@ export const fetchGroupChatInvites = createAsyncThunk(
       url: `/chat/getGroupChatRequest`,
     });
     thunkAPI.dispatch(setGroupChatInvites(response?.data?.data));
+    console.log('thunkAPI',thunkAPI)
+    // toast.success(
+    //   generateInvitationMessage(
+    //     response?.data?.data[response?.data?.data?.length - 1]
+    //   )
+    // );
     return response.data;
   }
 );
@@ -89,7 +95,6 @@ export const groupInvitationAction = createAsyncThunk(
     return response.data;
   }
 );
-
 
 export const loadChatsAction = createAsyncThunk(
   '/chat/loadChats',

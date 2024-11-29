@@ -1,4 +1,9 @@
+import EmojiPicker from 'emoji-picker-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import { loadChatsAction } from '../../Actions/ChatActions';
+import { ChatTypeEnum } from '../../Enums';
 import {
   chatUser,
   IChat,
@@ -7,17 +12,18 @@ import {
   User,
 } from '../../Types/chatSliceTypes';
 import addUserIcon from '../../assets/addUserIcon.svg';
+import attachIcon from '../../assets/attachIcon.svg';
+import emojiIcon from '../../assets/emojiIcon.svg';
+import micIcon from '../../assets/micIcon.svg';
+import profileAvatar from '../../assets/profileAvatar.svg';
+import sendIcon from '../../assets/sendIcon.svg';
+import { useSocket } from '../../context/SocketContext';
 import GroupChatInviteModal from '../GroupChatInviteModal/GroupChatInviteModal';
-import { useDispatch, useSelector } from 'react-redux';
 import {
   changeIsTypingUserStatus,
-  clearCurrentChat,
   incrementChatLoadPage,
   selectChatState,
 } from './chatSlice';
-import { loadChatsAction } from '../../Actions/ChatActions';
-import { ChatTypeEnum } from '../../Enums';
-import { useSocket } from '../../context/SocketContext';
 
 interface Iprops {
   chatUser?: chatUser;
@@ -42,13 +48,15 @@ const CurrentChatWindow = (props: Iprops) => {
     chatGroupInfo,
   } = props;
   const [message, setMessage] = useState('');
+  const [isEmojiDrawerOpen, setIsEmojiDrawerOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const scrollableDivRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const chatState = useSelector(selectChatState);
   const { currentChat, activlyTypingUserList } = chatState;
   const { pagination, chats } = currentChat;
-  const { page, limit } = pagination;
+  const { page, limit, totalPages } = pagination;
+  const params = useParams();
 
   const handleSubmitMessage = () => {
     sendMessage(message);
@@ -71,34 +79,71 @@ const CurrentChatWindow = (props: Iprops) => {
 
   // Function to load more data when scroll reaches the bottom
   const loadMoreData = useCallback(async () => {
-    dispatch(
-      //@ts-ignore
-      loadChatsAction({
-        queryParams: `?type=${
-          isGroupChat ? ChatTypeEnum.GROUP_CHAT : ChatTypeEnum.USER
-        }&receiverId=${chatUser._id}&page=${page || 1}&limit=${15}`,
-      })
-    );
-  }, [page, chatUser?._id]);
+    if (loading) return; // Prevent loading if already in progress
+
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '12',
+        type: isGroupChat ? ChatTypeEnum.GROUP_CHAT : ChatTypeEnum.USER, // Adjust based on chat type
+      });
+      console.log('isGroupChat', isGroupChat, chatGroupInfo?._id);
+
+      // Append the correct ID based on chat type
+      if (isGroupChat && chatGroupInfo?._id) {
+        queryParams.append('groupId', chatGroupInfo._id);
+      } else if (chatUser?._id) {
+        queryParams.append('receiverId', chatUser._id);
+      }
+
+      // Dispatch action with built query
+      dispatch(
+        //@ts-ignore
+        loadChatsAction({ queryParams: `?${queryParams.toString()}` })
+      );
+
+      // Handle scrolling logic after data load
+      handleScrollAfterLoad();
+    } finally {
+      setLoading(false);
+    }
+  }, [page, isGroupChat, loading, params?.id, params?.chatType]);
+
+  const handleScrollAfterLoad = () => {
+    if (!messageContainerRef?.current) return;
+
+    if (page === 1) {
+      // Scroll to bottom for the first page
+      messageContainerRef.current.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // Scroll to a specific position for subsequent pages
+      messageContainerRef.current.scrollTo({
+        top: 1000, // Adjust the height as needed
+        behavior: 'smooth',
+      });
+    }
+  };
 
   useEffect(() => {
-    loadMoreData();
-    messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatUser?._id]);
+    if (page) {
+      loadMoreData();
+    }
+  }, [page, params?.id, params?.chatType]);
 
   // Handler for scroll event
   const handleScroll = useCallback(() => {
     const div = scrollableDivRef.current;
     if (div) {
-      // Check if user has scrolled to the top
+      // Check if user has scrolled to the top (or near the top, adjust threshold as needed)
       if (div.scrollTop === 0 && !loading) {
-        // loadMoreData();
-        // if (page === limit) {
-        dispatch(incrementChatLoadPage());
-        // }
+        // Only load more data if there are more pages to load
+        if (page < totalPages) {
+          dispatch(incrementChatLoadPage());
+        }
       }
     }
-  }, [loading, loadMoreData]);
+  }, [loading, page, totalPages, dispatch]);
 
   useEffect(() => {
     const div = scrollableDivRef.current;
@@ -109,7 +154,7 @@ const CurrentChatWindow = (props: Iprops) => {
       if (div) {
         div.removeEventListener('scroll', handleScroll);
       }
-      dispatch(clearCurrentChat());
+      // dispatch(clearCurrentChat());
     };
   }, [handleScroll]);
 
@@ -144,6 +189,10 @@ const CurrentChatWindow = (props: Iprops) => {
     });
   };
 
+  const handleEomoji = (e) => {
+    setMessage((prev) => prev + e?.emoji);
+  };
+
   return (
     <>
       {isInvtUserModalOpen && (
@@ -156,15 +205,7 @@ const CurrentChatWindow = (props: Iprops) => {
         <div className="relative flex items-center justify-between p-3 border-b border-gray-300">
           <div className="flex items-center ">
             <button className="md:hidden" onClick={openUserList}>
-              <svg
-                height="25"
-                viewBox="0 0 48 48"
-                width="48"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M0 0h48v48h-48z" fill="none" />
-                <path d="M40 22h-24.34l11.17-11.17-2.83-2.83-16 16 16 16 2.83-2.83-11.17-11.17h24.34v-4z" />
-              </svg>
+              <img src={profileAvatar} alt="profile-avatar" />
             </button>
             {!isGroupChat && (
               <div className="relative">
@@ -174,9 +215,8 @@ const CurrentChatWindow = (props: Iprops) => {
                   alt="username"
                 />
                 <span
-                  className={`absolute w-3 h-3 ${
-                    chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
-                  } rounded-full left-6 top-1`}
+                  className={`absolute w-3 h-3 ${chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
+                    } rounded-full left-6 top-1`}
                 ></span>
               </div>
             )}
@@ -201,11 +241,10 @@ const CurrentChatWindow = (props: Iprops) => {
               {chats?.map((chat, index: number) => (
                 <li
                   key={`_${index}`}
-                  className={`flex ${
-                    chat?.senderId === user?._id
-                      ? 'justify-end'
-                      : 'justify-start'
-                  }`}
+                  className={`flex ${chat?.senderId === user?._id
+                    ? 'justify-end'
+                    : 'justify-start'
+                    }`}
                 >
                   <div className="relative max-w-xl md:w-auto break-words px-5 py-3 bg-white rounded-lg shadow-lg h-auto">
                     <span className="block text-sm font-medium text-gray-900 mb-1">
@@ -230,61 +269,38 @@ const CurrentChatWindow = (props: Iprops) => {
               </p>
             </div>
           )}
-
           {/* Typing indicator */}
-          {activlyTypingUserList?.has(chatUser._id) && (
-            <div className="typing-indicator">
+          {activlyTypingUserList?.[chatUser._id] && (
+            <div className="typing-indicator typing-in-chat-box-indicator sticky">
               <span className="dot"></span>
               <span className="dot"></span>
               <span className="dot"></span>
             </div>
           )}
-
           <div ref={messageContainerRef} />
         </div>
+
         <form
           onSubmit={(e) => {
             e?.preventDefault();
             handleSubmitMessage();
           }}
-          className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px]"
+          className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px] "
         >
-          <button>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6 text-gray-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+
+          <button onClick={() => setIsEmojiDrawerOpen((prev) => !prev)} className="w-6 h-6 text-gray-500 relative" type="button">
+            <div className="absolute bottom-14"><EmojiPicker onEmojiClick={handleEomoji} open={isEmojiDrawerOpen} /></div>
+            <img className="text-gray-500" src={emojiIcon} alt="emoji-icon" />
           </button>
-          <button>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5 text-gray-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-              />
-            </svg>
+          <button className="w-6 h-6 text-gray-500" type="button">
+            <img className="text-gray-500" src={attachIcon} alt="file-icon" />
           </button>
 
           <input
             type="text"
-            onChange={(e) => setMessage(e?.target?.value)}
+            onChange={(e) => {
+              setMessage(e?.target?.value);
+            }}
             value={message}
             placeholder="Message"
             className="block w-full py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700"
@@ -297,31 +313,11 @@ const CurrentChatWindow = (props: Iprops) => {
               bluredHandler();
             }}
           />
-          <button type="button">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5 text-gray-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-              />
-            </svg>
+          <button className="w-6 h-6" type="button">
+            <img src={micIcon} alt="mic-icon" />
           </button>
-          <button type="submit">
-            <svg
-              className="w-5 h-5 text-gray-500 origin-center transform rotate-90"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-            </svg>
+          <button className="w-6 h-6 rotate-90" type="submit">
+            <img src={sendIcon} alt="send-icon" />
           </button>
         </form>
       </div>

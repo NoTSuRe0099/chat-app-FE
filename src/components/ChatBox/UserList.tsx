@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { logoutAction } from '../../Actions/AuthActions';
 import {
   fetchGroupChatInvites,
@@ -47,7 +47,7 @@ const UserList = (props: IProps) => {
   useEffect(() => {
     if (chatState?.chatGroups?.length) {
       chatState?.chatGroups?.forEach((it) => {
-        socket.emit('JOIN_GROUP', { groupId: it?._id });
+        socket?.emit('JOIN_GROUP', { groupId: it?._id });
       });
     }
   }, [chatState?.chatGroups]);
@@ -89,6 +89,8 @@ const UserList = (props: IProps) => {
       groupInvitationAction({ id: invitationId, isAccepted: isAccepted })
     );
   };
+
+  const params = useParams();
 
   return (
     <>
@@ -148,9 +150,16 @@ const UserList = (props: IProps) => {
           <>
             {userList?.map((user: User) => (
               <Link
+                onClick={() => {
+                  if (
+                    params?.chatType === ChatTypeEnum.USER &&
+                    params?.id === user?._id
+                  ) {
+                    dispatch(clearCurrentChat());
+                  }
+                }}
                 key={user?._id}
                 to={`/chat/${ChatTypeEnum.USER}/${user?._id}`}
-                onClick={() => dispatch(clearCurrentChat())}
                 className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
               >
                 <div className="relative flex items-center p-3">
@@ -178,7 +187,7 @@ const UserList = (props: IProps) => {
                     </span> */}
                   </div>
                   <span className="block ml-2 text-sm text-gray-600">
-                    {activlyTypingUserList?.has(user?._id) ? (
+                    {activlyTypingUserList?.[user?._id] ? (
                       <div className="typing-indicator mt-2">
                         <span className="dot"></span>
                         <span className="dot"></span>
@@ -193,9 +202,16 @@ const UserList = (props: IProps) => {
             ))}
             {chatGroups?.map((group) => (
               <Link
+                onClick={() => {
+                  if (
+                    params?.chatType !== ChatTypeEnum.GROUP_CHAT &&
+                    params?.id !== group?._id
+                  ) {
+                    dispatch(clearCurrentChat());
+                  }
+                }}
                 key={group?._id}
                 to={`/chat/${ChatTypeEnum.GROUP_CHAT}/${group?._id}`}
-                onClick={() => dispatch(clearCurrentChat())}
                 className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
               >
                 <div className="relative flex items-center p-3">

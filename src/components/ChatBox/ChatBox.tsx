@@ -22,6 +22,7 @@ import {
   selectChatState,
 } from './chatSlice';
 import { ChatTypeEnum } from '../../Enums';
+import { generateInvitationMessage } from '../../functions/functions';
 
 const audioUrl = '/notification-sound-7062.mp3';
 
@@ -46,6 +47,7 @@ const ChatPage = () => {
   };
 
   useEffect(() => {
+    console.log('params?.id && params?.chatType', params?.id, params?.chatType);
     if (params?.id && params?.chatType === ChatTypeEnum.USER) {
       const user = chatState?.users?.find((user) => user?._id === params?.id);
 
@@ -63,7 +65,7 @@ const ChatPage = () => {
     } else {
       setToggleUserList(true);
     }
-  }, [params?.id]);
+  }, [params?.id, params?.chatType]);
 
   useEffect(() => {
     dispatch(flushMessages());
@@ -147,13 +149,15 @@ const ChatPage = () => {
       socket?.on('RECEIVE_MESSAGE', (data: ISingleUserChat) => {
         console.log('user data', data);
         dispatch(pushNewMessage({ id: data?.senderId, chat: data }));
-        dispatch(
-          pushNewCurrentChat({
-            ...data,
-            _id: crypto.randomUUID(),
-            type: ChatTypeEnum.USER,
-          })
-        );
+        if (chatUser?._id === data?.senderId) {
+          dispatch(
+            pushNewCurrentChat({
+              ...data,
+              _id: crypto.randomUUID(),
+              type: ChatTypeEnum.USER,
+            })
+          );
+        }
 
         messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
 
@@ -182,12 +186,12 @@ const ChatPage = () => {
             type: ChatTypeEnum.GROUP_CHAT,
           })
         );
-        dispatch(
-          pushNewGroupChatMessage({
-            id: groupId,
-            chat: { message, senderId, sentAt: new Date().toISOString() },
-          })
-        );
+        // dispatch(
+        //   pushNewGroupChatMessage({
+        //     id: groupId,
+        //     chat: { message, senderId, sentAt: new Date().toISOString() },
+        //   })
+        // );
         if (senderId !== authState?.user?._id) {
           showNotification(
             'New Group Message',
@@ -259,13 +263,13 @@ const ChatPage = () => {
     //   pushNewGroupChatMessage({ id: currentChatGroup?._id, chat: payload })
     // );
 
-    dispatch(
-      pushNewCurrentChat({
-        ...payload,
-        _id: crypto.randomUUID(),
-        type: ChatTypeEnum.GROUP_CHAT,
-      })
-    );
+    // dispatch(
+    //   pushNewCurrentChat({
+    //     ...payload,
+    //     _id: crypto.randomUUID(),
+    //     type: ChatTypeEnum.GROUP_CHAT,
+    //   })
+    // );
     socket?.emit('SEND_GROUP_MESSAGE', {
       groupId: currentChatGroup?._id,
       payload: payload,

@@ -28,7 +28,7 @@ const initialState: IChatState = {
   chatGroupMessages: {},
   usersForGroupInvt: [],
   currentUsersGroupInvites: [],
-  activlyTypingUserList: new Set([]),
+  activlyTypingUserList: {},
 };
 
 const ChatSlice = createSlice({
@@ -69,7 +69,7 @@ const ChatSlice = createSlice({
       state.usersForGroupInvt = action?.payload;
     },
     setGroupChatInvites: (state, action: PayloadAction<any>) => {
-      state.currentUsersGroupInvites = action?.payload;
+      state.currentUsersGroupInvites = action?.payload || [];
     },
     pushNewMessage: (state, action: PayloadAction<any>) => {
       const { id, chat } = action.payload;
@@ -89,17 +89,14 @@ const ChatSlice = createSlice({
 
       state.chatGroupMessages = chatGroupMessages;
     },
-
     changeIsTypingUserStatus: (state, action: PayloadAction<any>) => {
       const { senderId, isTyping } = action.payload;
-      const _activlyTypingUserList = new Set([...state.activlyTypingUserList]);
+      console.log('action.payload', action.payload);
 
-      if (!_activlyTypingUserList.has(senderId) && isTyping) {
-        _activlyTypingUserList.add(senderId);
-        state.activlyTypingUserList = _activlyTypingUserList;
+      if (isTyping) {
+        state.activlyTypingUserList[senderId] = true;
       } else {
-        _activlyTypingUserList.delete(senderId);
-        state.activlyTypingUserList = _activlyTypingUserList;
+        delete state.activlyTypingUserList[senderId];
       }
     },
   },
@@ -120,7 +117,7 @@ export const {
   changeIsTypingUserStatus,
 } = ChatSlice.actions;
 
-// Selector to access auth state
+// Selector to access chat state
 export const selectChatState = (state: RootState) => state.chatState;
 
 export default ChatSlice.reducer;
