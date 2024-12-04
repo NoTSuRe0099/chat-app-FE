@@ -131,6 +131,10 @@ const CurrentChatWindow = (props: Iprops) => {
     }
   }, [page, params?.id, params?.chatType]);
 
+  useEffect(() => {
+    setMessage("");
+  }, [params?.id, params?.chatType]);
+
   // Handler for scroll event
   const handleScroll = useCallback(() => {
     const div = scrollableDivRef.current;

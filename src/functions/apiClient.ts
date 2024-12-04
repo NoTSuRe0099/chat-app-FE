@@ -19,6 +19,24 @@ const apiInstance: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
+export const publicApi: AxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_BASE_API_URL,
+  withCredentials: true,
+});
+
+apiInstance?.interceptors?.request?.use(
+  (config) => {
+    const token = store?.getState()?.authState?.access_token || '';
+    if (token) {
+      config.headers.Authorization = token;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Custom error handling function
 const handleApiError = (error: AxiosError) => {
   let errorMessage = 'An unexpected error occurred';
@@ -28,7 +46,7 @@ const handleApiError = (error: AxiosError) => {
     if (axiosError.response) {
       const { status, data } = axiosError.response;
       errorMessage = `Status ${status}: ${data}`;
-
+      // const access_token = store?.getState()?.authState?.access_token || '';
       if (status === 401) {
         localStorage.clear();
         store && store.dispatch(clearUser());
@@ -57,6 +75,25 @@ const callApi = async <T>(
 ): Promise<ApiResponse<T>> => {
   try {
     const response: AxiosResponse<T> = await apiInstance(config);
+    const { data } = response;
+
+    if (hasMessageProperty<T>(data)) {
+      if (data.message?.trim()?.length) toast.success(data.message);
+    }
+
+    return { data };
+  } catch (error: any) {
+    handleApiError(error);
+    console.error('Error in API call:', error); // Log the actual error object for debugging
+    throw error;
+  }
+};
+
+export const callPublicApi = async <T>(
+  config: AxiosRequestConfig
+): Promise<ApiResponse<T>> => {
+  try {
+    const response: AxiosResponse<T> = await publicApi(config);
     const { data } = response;
 
     if (hasMessageProperty<T>(data)) {

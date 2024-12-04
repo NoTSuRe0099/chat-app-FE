@@ -1,6 +1,11 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { authSliceInitialState, clearUser, setUser } from '../auth/AuthSlice';
-import callApi from '../functions/apiClient';
+import {
+  authSliceInitialState,
+  clearUser,
+  setAccessToken,
+  setUser,
+} from '../auth/AuthSlice';
+import callApi, { callPublicApi } from '../functions/apiClient';
 
 export const registerAction = createAsyncThunk(
   'auth/register',
@@ -18,11 +23,21 @@ export const registerAction = createAsyncThunk(
 export const loginAction = createAsyncThunk(
   'auth/login',
   async (params: any, thunkAPI) => {
-    const response: any = await callApi({
+    const response: any = await callPublicApi({
       method: 'POST',
       url: '/auth/login',
       data: params,
     });
+    thunkAPI.dispatch(setAccessToken(response?.data?.data));
+    if (response?.data?.data) {
+      localStorage.setItem(
+        'authState',
+        JSON.stringify({
+          access_token: response.data?.data?.access_token,
+          isAuthenticated: true,
+        })
+      );
+    }
     thunkAPI.dispatch(fetchUserData(null));
 
     return response.data;
@@ -37,11 +52,12 @@ export const fetchUserData = createAsyncThunk(
       url: '/auth/me',
     });
     thunkAPI.dispatch(setUser(response?.data?.data));
+    const storedUserData = JSON.parse(localStorage.getItem('authState')!) || {};
     localStorage.setItem(
       'authState',
       JSON.stringify({
+        ...storedUserData,
         user: response.data?.data,
-        isAuthenticated: true,
       })
     );
     return response.data;

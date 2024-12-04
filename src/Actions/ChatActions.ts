@@ -11,6 +11,7 @@ import callApi from '../functions/apiClient';
 export const fetchAllUser = createAsyncThunk(
   'auth/fetchUser',
   async (_: any, thunkAPI) => {
+    console.log('asdasd');
     const response: any = await callApi({
       method: 'GET',
       url: '/auth/getAllUsers',
@@ -69,7 +70,7 @@ export const fetchGroupChatInvites = createAsyncThunk(
       url: `/chat/getGroupChatRequest`,
     });
     thunkAPI.dispatch(setGroupChatInvites(response?.data?.data));
-    console.log('thunkAPI',thunkAPI)
+    console.log('thunkAPI', thunkAPI);
     // toast.success(
     //   generateInvitationMessage(
     //     response?.data?.data[response?.data?.data?.length - 1]
