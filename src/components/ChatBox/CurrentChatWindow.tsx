@@ -12,11 +12,7 @@ import {
   User,
 } from '../../Types/chatSliceTypes';
 import addUserIcon from '../../assets/addUserIcon.svg';
-import attachIcon from '../../assets/attachIcon.svg';
-import emojiIcon from '../../assets/emojiIcon.svg';
-import micIcon from '../../assets/micIcon.svg';
 import profileAvatar from '../../assets/profileAvatar.svg';
-import sendIcon from '../../assets/sendIcon.svg';
 import { useSocket } from '../../context/SocketContext';
 import GroupChatInviteModal from '../GroupChatInviteModal/GroupChatInviteModal';
 import {
@@ -24,6 +20,11 @@ import {
   incrementChatLoadPage,
   selectChatState,
 } from './chatSlice';
+import cloudinary from 'cloudinary';
+import { publicApi } from '../../functions/apiClient';
+import MessageInputBox from './MessageInputBox';
+import ChatHeader from './ChatHeader';
+import ChatContent from './ChatContent';
 
 interface Iprops {
   chatUser?: chatUser;
@@ -55,7 +56,7 @@ const CurrentChatWindow = (props: Iprops) => {
   const chatState = useSelector(selectChatState);
   const { currentChat, activlyTypingUserList } = chatState;
   const { pagination, chats } = currentChat;
-  const { page, limit, totalPages } = pagination;
+  const { page, totalPages } = pagination;
   const params = useParams();
 
   const handleSubmitMessage = () => {
@@ -88,7 +89,6 @@ const CurrentChatWindow = (props: Iprops) => {
         limit: '12',
         type: isGroupChat ? ChatTypeEnum.GROUP_CHAT : ChatTypeEnum.USER, // Adjust based on chat type
       });
-      console.log('isGroupChat', isGroupChat, chatGroupInfo?._id);
 
       // Append the correct ID based on chat type
       if (isGroupChat && chatGroupInfo?._id) {
@@ -206,85 +206,35 @@ const CurrentChatWindow = (props: Iprops) => {
         />
       )}
       <div className="w-full flex flex-col justify-between h-full">
-        <div className="relative flex items-center justify-between p-3 border-b border-gray-300">
-          <div className="flex items-center ">
-            <button className="md:hidden" onClick={openUserList}>
-              <img src={profileAvatar} alt="profile-avatar" />
-            </button>
-            {!isGroupChat && (
-              <div className="relative">
-                <img
-                  className="object-cover w-10 h-10 rounded-full"
-                  src="https://static.vecteezy.com/system/resources/previews/026/619/142/non_2x/default-avatar-profile-icon-of-social-media-user-photo-image-vector.jpg"
-                  alt="username"
-                />
-                <span
-                  className={`absolute w-3 h-3 ${chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
-                    } rounded-full left-6 top-1`}
-                ></span>
-              </div>
-            )}
+        <ChatHeader
+          openUserList={openUserList}
+          isGroupChat={isGroupChat}
+          chatUser={chatUser}
+          chatGroupInfo={chatGroupInfo}
+          profileAvatar={profileAvatar}
+          addUserIcon={addUserIcon}
+          openUserInvtModal={openUserInvtModal}
+        />
 
-            <span className="block ml-2 font-bold text-gray-600">
-              {isGroupChat ? chatGroupInfo?.name : chatUser?.name || 'NA'}
-            </span>
-          </div>
+        <ChatContent scrollableDivRef={scrollableDivRef}
+          chats={chats}
+          user={user}
+          getUserDetailsById={getUserDetailsById}
+          activlyTypingUserList={activlyTypingUserList}
+          chatUser={chatUser}
+          messageContainerRef={messageContainerRef}
+        />
 
-          {isGroupChat && (
-            <button onClick={openUserInvtModal}>
-              <img className="h-4" src={addUserIcon} alt="Add User" />
-            </button>
-          )}
-        </div>
-        <div
-          ref={scrollableDivRef}
-          className="relative w-full p-6 overflow-y-auto h-full bg-gray-50"
-        >
-          {chats?.length ? (
-            <ul className="space-y-4">
-              {chats?.map((chat, index: number) => (
-                <li
-                  key={`_${index}`}
-                  className={`flex ${chat?.senderId === user?._id
-                    ? 'justify-end'
-                    : 'justify-start'
-                    }`}
-                >
-                  <div className="relative max-w-xl md:w-auto break-words px-5 py-3 bg-white rounded-lg shadow-lg h-auto">
-                    <span className="block text-sm font-medium text-gray-900 mb-1">
-                      {chat?.senderId === user?._id
-                        ? 'You'
-                        : getUserDetailsById(chat?.senderId)?.name}
-                    </span>
-                    <p className="block text-gray-700 w-max text-left">
-                      {chat?.message}
-                    </p>
-                    <span className="block mt-2 text-xs text-gray-500">
-                      {new Date(chat?.sentAt)?.toLocaleDateString()}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="flex items-center justify-center h-full text-center">
-              <p className="text-lg font-semibold text-gray-500">
-                No messages to display.
-              </p>
-            </div>
-          )}
-          {/* Typing indicator */}
-          {activlyTypingUserList?.[chatUser._id] && (
-            <div className="typing-indicator typing-in-chat-box-indicator sticky">
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-            </div>
-          )}
-          <div ref={messageContainerRef} />
-        </div>
+        <MessageInputBox handleSubmitMessage={handleSubmitMessage}
+          handleEmoji={handleEomoji}
+          setIsEmojiDrawerOpen={setIsEmojiDrawerOpen}
+          isEmojiDrawerOpen={isEmojiDrawerOpen}
+          setMessage={setMessage}
+          message={message}
+          focusedHandler={fucusedHandler}
+          blurredHandler={bluredHandler} />
 
-        <form
+        {/* <form
           onSubmit={(e) => {
             e?.preventDefault();
             handleSubmitMessage();
@@ -323,7 +273,7 @@ const CurrentChatWindow = (props: Iprops) => {
           <button className="w-6 h-6 rotate-90" type="submit">
             <img src={sendIcon} alt="send-icon" />
           </button>
-        </form>
+        </form> */}
       </div>
     </>
   );
