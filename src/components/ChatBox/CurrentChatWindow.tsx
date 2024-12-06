@@ -3,12 +3,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { loadChatsAction } from '../../Actions/ChatActions';
-import { ChatTypeEnum } from '../../Enums';
+import { ChatTypeEnum, MessageType } from '../../Enums';
 import {
   chatUser,
   IChat,
   IgroupChats,
   ISingleUserChat,
+  sendMessageFn,
   User,
 } from '../../Types/chatSliceTypes';
 import addUserIcon from '../../assets/addUserIcon.svg';
@@ -30,7 +31,7 @@ interface Iprops {
   chatUser?: chatUser;
   messages: ISingleUserChat[] | IChat[];
   user: User;
-  sendMessage: (message: string) => void;
+  sendMessage: (payload: sendMessageFn) => void;
   messageContainerRef: React.MutableRefObject<any> | null;
   openUserList: () => void;
   isGroupChat: boolean;
@@ -59,8 +60,8 @@ const CurrentChatWindow = (props: Iprops) => {
   const { page, totalPages } = pagination;
   const params = useParams();
 
-  const handleSubmitMessage = () => {
-    sendMessage(message);
+  const handleSubmitMessage = ({ messageType, mediaUrl }: { messageType: string, mediaUrl?: string; }) => {
+    sendMessage({ message, mediaUrl: mediaUrl, messageType: messageType });
     setMessage('');
   };
 
@@ -234,46 +235,7 @@ const CurrentChatWindow = (props: Iprops) => {
           focusedHandler={fucusedHandler}
           blurredHandler={bluredHandler} />
 
-        {/* <form
-          onSubmit={(e) => {
-            e?.preventDefault();
-            handleSubmitMessage();
-          }}
-          className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px] "
-        >
 
-          <button onClick={() => setIsEmojiDrawerOpen((prev) => !prev)} className="w-6 h-6 text-gray-500 relative" type="button">
-            <div className="absolute bottom-14"><EmojiPicker onEmojiClick={handleEomoji} open={isEmojiDrawerOpen} /></div>
-            <img className="text-gray-500" src={emojiIcon} alt="emoji-icon" />
-          </button>
-          <button className="w-6 h-6 text-gray-500" type="button">
-            <img className="text-gray-500" src={attachIcon} alt="file-icon" />
-          </button>
-
-          <input
-            type="text"
-            onChange={(e) => {
-              setMessage(e?.target?.value);
-            }}
-            value={message}
-            placeholder="Message"
-            className="block w-full py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700"
-            name="message"
-            required
-            onFocus={() => {
-              fucusedHandler();
-            }}
-            onBlur={() => {
-              bluredHandler();
-            }}
-          />
-          <button className="w-6 h-6" type="button">
-            <img src={micIcon} alt="mic-icon" />
-          </button>
-          <button className="w-6 h-6 rotate-90" type="submit">
-            <img src={sendIcon} alt="send-icon" />
-          </button>
-        </form> */}
       </div>
     </>
   );

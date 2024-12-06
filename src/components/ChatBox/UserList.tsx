@@ -18,14 +18,14 @@ import activeNotification from '../../assets/activeNotification.svg';
 import GroupInvitationsModal from '../GroupInvitationsModal/GroupInvitationsModal';
 interface IProps {
   userList: User[];
-  onlieUsersList: string[];
+  onlineUsersList: string[];
 }
 
 const UserList = (props: IProps) => {
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
   const [isNotificationModalOpen, setOpenNotificationModalOpen] =
     useState(false);
-  const { userList = [], onlieUsersList } = props;
+  const { userList = [], onlineUsersList } = props;
   const { socket } = useSocket();
   const chatState = useSelector(selectChatState);
   const authState = useSelector(selectAuth);
@@ -169,11 +169,10 @@ const UserList = (props: IProps) => {
                     alt="username"
                   />
                   <span
-                    className={`absolute w-3 h-3 ${
-                      onlieUsersList?.includes(user?._id)
+                    className={`absolute w-3 h-3 ${onlineUsersList?.includes(user?._id)
                         ? 'bg-green-600'
                         : 'bg-red-600'
-                    }  rounded-full left-10 top-3`}
+                      }  rounded-full left-10 top-3`}
                   ></span>
                 </div>
 
@@ -225,7 +224,7 @@ const UserList = (props: IProps) => {
 
                   {/* <span
                       className={`absolute w-3 h-3 ${
-                        onlieUsersList?.includes(group?._id)
+                        onlineUsersList?.includes(group?._id)
                           ? 'bg-green-600'
                           : 'bg-red-600'
                       }  rounded-full left-10 top-3`}

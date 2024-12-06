@@ -3,26 +3,13 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchAllUser, fetchGroupChatInvites } from '../../Actions/ChatActions';
-import {
-  IChat,
-  ISingleUserChat,
-  IgroupChats,
-  User,
-  chatUser,
-} from '../../Types/chatSliceTypes';
+import { ChatTypeEnum, EventTypes } from '../../Enums';
+import { IChat, ISingleUserChat, IgroupChats, User, chatUser, sendMessageFn } from '../../Types/chatSliceTypes';
 import { selectAuth } from '../../auth/AuthSlice';
 import { useSocket } from '../../context/SocketContext';
 import CurrentChatWindow from './CurrentChatWindow';
 import UserList from './UserList';
-import {
-  flushMessages,
-  pushNewCurrentChat,
-  pushNewGroupChatMessage,
-  pushNewMessage,
-  selectChatState,
-} from './chatSlice';
-import { ChatTypeEnum } from '../../Enums';
-import { generateInvitationMessage } from '../../functions/functions';
+import { flushMessages, pushNewCurrentChat, pushNewMessage, selectChatState } from './chatSlice';
 
 const audioUrl = '/notification-sound-7062.mp3';
 
@@ -36,30 +23,24 @@ const ChatPage = () => {
   const messageContainerRef = useRef(null);
 
   const [currentChatUser, setCurrentChatUser] = useState<User | null>(null);
-  const [onlieUsersList, setOnlieUsersList] = useState<string[]>([]);
+  const [onlineUsersList, setOnlineUsersList] = useState<string[]>([]);
   const [toggleUserList, setToggleUserList] = useState(true);
-  const [currentChatGroup, setCurrentChatGroup] = useState<IgroupChats | null>(
-    null
-  );
+  const [currentChatGroup, setCurrentChatGroup] = useState<IgroupChats | null>(null);
+
   const chatUser: chatUser = {
     ...currentChatUser!,
-    isOnline: onlieUsersList?.includes(currentChatUser?._id!),
+    isOnline: onlineUsersList?.includes(currentChatUser?._id!),
   };
 
   useEffect(() => {
-    console.log('params?.id && params?.chatType', params?.id, params?.chatType);
     if (params?.id && params?.chatType === ChatTypeEnum.USER) {
       const user = chatState?.users?.find((user) => user?._id === params?.id);
-
       setCurrentChatUser(user!);
       setToggleUserList(false);
     } else if (params?.id && params?.chatType === ChatTypeEnum.GROUP_CHAT) {
-      const groupChatState =
-        params?.chatType === ChatTypeEnum.GROUP_CHAT
-          ? chatState?.chatGroups?.find((it) => it?._id === params?.id)
-          : null;
-      console.log('groupChatState', groupChatState);
-
+      const groupChatState = params?.chatType === ChatTypeEnum.GROUP_CHAT
+        ? chatState?.chatGroups?.find((it) => it?._id === params?.id)
+        : null;
       setCurrentChatGroup(groupChatState);
       setToggleUserList(false);
     } else {
@@ -96,9 +77,7 @@ const ChatPage = () => {
     });
 
     greeting.addEventListener('click', function () {
-      const targetURL = `${import.meta.env.VITE_BASE_API_URL}/chat/${
-        userObj?._id
-      }`;
+      const targetURL = `${import.meta.env.VITE_BASE_API_URL}/chat/${userObj?._id}`;
 
       // Create a button to trigger the new tab
       const openButton = document.createElement('button');
@@ -142,11 +121,11 @@ const ChatPage = () => {
       ));
     }
   };
-  console.log('fesfsefsefsefesfesf');
+
   useEffect(() => {
     if (socket) {
       // Handler for individual messages
-      socket?.on('RECEIVE_MESSAGE', (data: ISingleUserChat) => {
+      socket?.on(EventTypes.RECEIVE_MESSAGE, (data: ISingleUserChat) => {
         console.log('user data', data);
         dispatch(pushNewMessage({ id: data?.senderId, chat: data }));
         if (chatUser?._id === data?.senderId) {
@@ -175,7 +154,7 @@ const ChatPage = () => {
       });
 
       // Handler for group messages
-      socket?.on('RECIEVE_GROUP_MESSAGE', (data) => {
+      socket?.on(EventTypes.RECEIVE_GROUP_MESSAGE, (data) => {
         const { groupId, message, senderId } = data;
         console.log('group data', data);
 
@@ -186,12 +165,7 @@ const ChatPage = () => {
             type: ChatTypeEnum.GROUP_CHAT,
           })
         );
-        // dispatch(
-        //   pushNewGroupChatMessage({
-        //     id: groupId,
-        //     chat: { message, senderId, sentAt: new Date().toISOString() },
-        //   })
-        // );
+
         if (senderId !== authState?.user?._id) {
           showNotification(
             'New Group Message',
@@ -203,11 +177,11 @@ const ChatPage = () => {
       });
 
       // Handler for updated online users
-      socket?.on('UPDATED_ONLINE_USERS', (data: string[]) => {
-        setOnlieUsersList(data);
+      socket?.on(EventTypes.UPDATED_ONLINE_USERS, (data: string[]) => {
+        setOnlineUsersList(data);
       });
 
-      socket?.on('NEW_GROUP_INVITATION', (data) => {
+      socket?.on(EventTypes.NEW_GROUP_INVITATION, (data) => {
         //@ts-ignore
         dispatch(fetchGroupChatInvites());
         new Audio(audioUrl)?.play();
@@ -216,28 +190,31 @@ const ChatPage = () => {
 
       // Cleanup on component unmount
       return () => {
-        socket?.off('RECEIVE_MESSAGE');
-        socket?.off('RECIEVE_GROUP_MESSAGE');
-        socket?.off('UPDATED_ONLINE_USERS');
+        socket?.off(EventTypes.RECEIVE_MESSAGE);
+        socket?.off(EventTypes.RECEIVE_GROUP_MESSAGE);
+        socket?.off(EventTypes.UPDATED_ONLINE_USERS);
+        socket?.off(EventTypes.NEW_GROUP_INVITATION);
       };
     }
   }, [socket, params?.id, chatUser?._id, dispatch]);
 
-  const sendMessage = (message: string) => {
+  const sendMessage = (payload: sendMessageFn) => {
     if (socket) {
       if (params?.chatType === ChatTypeEnum.USER) {
-        sendUserMessage(message);
+        sendUserMessage(payload);
       } else {
-        sendGroupChatMessage(message);
+        sendGroupChatMessage(payload);
       }
       // new Audio(audioUrl).play();
       messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const sendUserMessage = (message: string) => {
+  const sendUserMessage = (param: sendMessageFn) => {
     const payload: ISingleUserChat = {
-      message: message,
+      message: param?.message,
+      messageType: param?.messageType,
+      mediaUrl: param?.mediaUrl,
       receiverId: currentChatUser?._id ?? '',
       sentAt: new Date().toISOString(),
       senderId: authState?.user?._id ?? '',
@@ -253,23 +230,15 @@ const ChatPage = () => {
     socket?.emit('SEND_MESSAGE', payload);
   };
 
-  const sendGroupChatMessage = (message: string) => {
+  const sendGroupChatMessage = (param: sendMessageFn) => {
     const payload: IChat = {
-      message: message,
+      message: param?.message,
+      messageType: param?.messageType,
+      mediaUrl: param?.mediaUrl,
       sentAt: new Date().toISOString(),
       senderId: authState?.user?._id ?? '',
     };
-    // dispatch(
-    //   pushNewGroupChatMessage({ id: currentChatGroup?._id, chat: payload })
-    // );
 
-    // dispatch(
-    //   pushNewCurrentChat({
-    //     ...payload,
-    //     _id: crypto.randomUUID(),
-    //     type: ChatTypeEnum.GROUP_CHAT,
-    //   })
-    // );
     socket?.emit('SEND_GROUP_MESSAGE', {
       groupId: currentChatGroup?._id,
       payload: payload,
@@ -287,11 +256,10 @@ const ChatPage = () => {
 
   return (
     <div className="h-full">
-      {/* <audio className="hidden" ref={audioRef} src={audioUrl} /> */}
       <div className="min-w-full border rounded h-full flex flex-col md:flex-row">
-        <div className={`${!toggleUserList && 'hidden'}  md:flex md:w-1/4`}>
+        <div className={`${!toggleUserList && 'hidden'} md:flex md:w-1/4`}>
           <UserList
-            onlieUsersList={onlieUsersList}
+            onlineUsersList={onlineUsersList}
             userList={chatState?.users}
           />
         </div>

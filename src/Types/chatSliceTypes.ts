@@ -17,6 +17,8 @@ export interface IChat {
   senderId: string;
   message: string;
   sentAt: Date | string;
+  messageType: string;
+  mediaUrl: string;
 }
 export interface ISingleUserChat extends IChat {
   receiverId: string;
@@ -84,4 +86,9 @@ export interface ICurrentChat {
 
 export interface chatUser extends User {
   isOnline: boolean;
+}
+export interface sendMessageFn {
+  message: string;
+  messageType: string;
+  mediaUrl: string;
 }

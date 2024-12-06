@@ -5,6 +5,7 @@ interface Chat {
   senderId: string;
   message: string;
   sentAt: string;
+  messageType?: string; // Add this line
 }
 
 interface User {
@@ -46,7 +47,20 @@ const ChatContent: React.FC<ChatsContentProps> = ({
                 <span className="block text-sm font-medium text-gray-900 mb-1">
                   {chat?.senderId === user?._id ? 'You' : getUserDetailsById(chat?.senderId)?.name}
                 </span>
-                <p className="block text-gray-700 w-max text-left">{chat?.message}</p>
+                {chat?.messageType === 'MEDIA' ? (
+                  <>
+                    <img
+                      src={chat?.mediaUrl}
+                      alt="Media"
+                      className="max-w-xs max-h-xs w-32 h-32 object-contain"
+                    />
+                    {chat?.message.length > 0 && (
+                      <p className="block text-gray-700 w-max text-left mt-2">{chat?.message}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="block text-gray-700 w-max text-left">{chat?.message}</p>
+                )}
                 <span className="block mt-2 text-xs text-gray-500">
                   {new Date(chat?.sentAt).toLocaleDateString()}
                 </span>

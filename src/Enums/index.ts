@@ -2,3 +2,15 @@ export enum ChatTypeEnum {
   USER = 'user',
   GROUP_CHAT = 'group',
 }
+
+export enum EventTypes {
+  RECEIVE_MESSAGE = 'RECEIVE_MESSAGE',
+  RECEIVE_GROUP_MESSAGE = 'RECEIVE_GROUP_MESSAGE',
+  UPDATED_ONLINE_USERS = 'UPDATED_ONLINE_USERS',
+  NEW_GROUP_INVITATION = 'NEW_GROUP_INVITATION',
+}
+
+export enum MessageType {
+  TEXT = 'TEXT',
+  MEDIA = 'MEDIA',
+}
