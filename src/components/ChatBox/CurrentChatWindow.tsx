@@ -1,9 +1,8 @@
-import EmojiPicker from 'emoji-picker-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { loadChatsAction } from '../../Actions/ChatActions';
-import { ChatTypeEnum, MessageType } from '../../Enums';
+import { ChatTypeEnum } from '../../Enums';
 import {
   chatUser,
   IChat,
@@ -16,16 +15,14 @@ import addUserIcon from '../../assets/addUserIcon.svg';
 import profileAvatar from '../../assets/profileAvatar.svg';
 import { useSocket } from '../../context/SocketContext';
 import GroupChatInviteModal from '../GroupChatInviteModal/GroupChatInviteModal';
+import ChatContent from './ChatContent';
+import ChatHeader from './ChatHeader';
+import MessageInputBox from './MessageInputBox';
 import {
   changeIsTypingUserStatus,
   incrementChatLoadPage,
   selectChatState,
 } from './chatSlice';
-import cloudinary from 'cloudinary';
-import { publicApi } from '../../functions/apiClient';
-import MessageInputBox from './MessageInputBox';
-import ChatHeader from './ChatHeader';
-import ChatContent from './ChatContent';
 
 interface Iprops {
   chatUser?: chatUser;
