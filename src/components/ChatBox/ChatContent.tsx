@@ -62,7 +62,7 @@ const ChatContent: React.FC<ChatsContentProps> = ({
                   <p className="block text-gray-700 w-max text-left">{chat?.message}</p>
                 )}
                 <span className="block mt-2 text-xs text-gray-500">
-                  {new Date(chat?.sentAt).toLocaleDateString()}
+                  {new Date(chat?.sentAt).toLocaleTimeString() + " " + new Date(chat?.sentAt).toLocaleDateString()}
                 </span>
               </div>
             </li>

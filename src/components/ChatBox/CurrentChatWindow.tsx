@@ -60,6 +60,7 @@ const CurrentChatWindow = (props: Iprops) => {
   const { page, totalPages } = pagination;
   const params = useParams();
 
+
   const handleSubmitMessage = ({ messageType, mediaUrl }: { messageType: string, mediaUrl?: string; }) => {
     sendMessage({ message, mediaUrl: mediaUrl, messageType: messageType });
     setMessage('');
@@ -76,11 +77,11 @@ const CurrentChatWindow = (props: Iprops) => {
   };
 
   const getUserDetailsById = (userId: string) => {
-    return chatGroupInfo.userList?.find((user) => user?._id === userId);
+    return chatState.users?.find((user) => user?._id === userId);
   };
 
   // Function to load more data when scroll reaches the bottom
-  const loadMoreData = useCallback(async () => {
+  const loadMoreData = async () => {
     if (loading) return; // Prevent loading if already in progress
 
     setLoading(true);
@@ -95,7 +96,7 @@ const CurrentChatWindow = (props: Iprops) => {
       if (isGroupChat && chatGroupInfo?._id) {
         queryParams.append('groupId', chatGroupInfo._id);
       } else if (chatUser?._id) {
-        queryParams.append('receiverId', chatUser._id);
+        queryParams.append('receiverId', params?.id);
       }
 
       // Dispatch action with built query
@@ -109,7 +110,7 @@ const CurrentChatWindow = (props: Iprops) => {
     } finally {
       setLoading(false);
     }
-  }, [page, isGroupChat, loading, params?.id, params?.chatType]);
+  };
 
   const handleScrollAfterLoad = () => {
     if (!messageContainerRef?.current) return;
@@ -130,6 +131,7 @@ const CurrentChatWindow = (props: Iprops) => {
     if (page) {
       loadMoreData();
     }
+    console.log('params?.id', params?.id);
   }, [page, params?.id, params?.chatType]);
 
   useEffect(() => {
@@ -234,8 +236,6 @@ const CurrentChatWindow = (props: Iprops) => {
           message={message}
           focusedHandler={fucusedHandler}
           blurredHandler={bluredHandler} />
-
-
       </div>
     </>
   );

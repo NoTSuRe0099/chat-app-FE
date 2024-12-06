@@ -149,17 +149,14 @@ const UserList = (props: IProps) => {
           <h2 className="my-2 mb-2 ml-2 text-lg text-gray-600">Chats</h2>
           <>
             {userList?.map((user: User) => (
-              <Link
+              <li
                 onClick={() => {
-                  if (
-                    params?.chatType === ChatTypeEnum.USER &&
-                    params?.id === user?._id
-                  ) {
+                  if (params?.id !== user?._id && params?.chatType === ChatTypeEnum.USER) {
                     dispatch(clearCurrentChat());
+                    navigate(`/chat/${ChatTypeEnum.USER}/${user?._id}`);
                   }
                 }}
                 key={user?._id}
-                to={`/chat/${ChatTypeEnum.USER}/${user?._id}`}
                 className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
               >
                 <div className="relative flex items-center p-3">
@@ -170,8 +167,8 @@ const UserList = (props: IProps) => {
                   />
                   <span
                     className={`absolute w-3 h-3 ${onlineUsersList?.includes(user?._id)
-                        ? 'bg-green-600'
-                        : 'bg-red-600'
+                      ? 'bg-green-600'
+                      : 'bg-red-600'
                       }  rounded-full left-10 top-3`}
                   ></span>
                 </div>
@@ -197,7 +194,7 @@ const UserList = (props: IProps) => {
                     )}
                   </span>
                 </div>
-              </Link>
+              </li>
             ))}
             {chatGroups?.map((group) => (
               <Link
