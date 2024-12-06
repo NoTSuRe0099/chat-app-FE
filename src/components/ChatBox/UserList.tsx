@@ -151,7 +151,7 @@ const UserList = (props: IProps) => {
             {userList?.map((user: User) => (
               <li
                 onClick={() => {
-                  if (params?.id !== user?._id && params?.chatType === ChatTypeEnum.USER) {
+                  if ((!params?.id && params?.chatType === ChatTypeEnum.USER) || (params?.id !== user?._id && params?.chatType === ChatTypeEnum.USER)) {
                     dispatch(clearCurrentChat());
                     navigate(`/chat/${ChatTypeEnum.USER}/${user?._id}`);
                   }
