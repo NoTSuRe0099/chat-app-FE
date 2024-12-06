@@ -5,10 +5,10 @@ import { Route, Routes } from 'react-router-dom';
 import ChatPage from './components/ChatBox/ChatBox';
 import { flushMessages } from './components/ChatBox/chatSlice';
 import ProtectedRoute from './components/ProtectedRoute';
+import Loader from './components/Shared/Loader';
 import LoginForm from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import { selectUIState } from './reducers/UISlice';
-import Loader from './components/Shared/loader';
 
 const App: React.FC = (props: any) => {
   const dispatch = useDispatch();
