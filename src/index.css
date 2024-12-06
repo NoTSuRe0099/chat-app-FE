@@ -25,8 +25,8 @@ body {
 }
 
 .typing-in-chat-box-indicator {
-  position: sticky;
-  bottom: -20px;
+  position: absolute;
+  bottom: 35px;
   left: 10px;
   width: 100px;
   height: 50px;

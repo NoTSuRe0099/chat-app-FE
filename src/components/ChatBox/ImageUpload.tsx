@@ -13,21 +13,28 @@ const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
 interface IProps {
   setMessage: React.Dispatch<React.SetStateAction<string>>;
-  handleSubmitMessage: (params: { messageType: string, mediaUrl?: string; }) => void;
+  handleSubmitMessage: (params: {
+    messageType: string;
+    mediaUrl?: string;
+  }) => void;
   message: string;
   focusedHandler: () => void;
   blurredHandler: () => void;
+  showModal: boolean;
+  setShowModal: (param: boolean) => void;
 }
 
 const ImageUpload = ({
   setMessage,
   message,
   focusedHandler,
-  blurredHandler, handleSubmitMessage }: IProps) => {
-
-
+  blurredHandler,
+  handleSubmitMessage,
+  showModal,
+  setShowModal,
+}: IProps) => {
   const [image, setImage] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+
   const dispatch = useDispatch();
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,11 +59,13 @@ const ImageUpload = ({
       formData.append('file', image);
       formData.append('upload_preset', uploadPreset);
 
-      await axios.post(url, formData)
-        .then((response) => {
-          //@ts-ignore
-          handleSubmitMessage({ messageType: MessageType.MEDIA, mediaUrl: response?.data?.url });
+      await axios.post(url, formData).then((response) => {
+        //@ts-ignore
+        handleSubmitMessage({
+          messageType: MessageType.MEDIA,
+          mediaUrl: response?.data?.url,
         });
+      });
       dispatch(stopLoading());
       setShowModal(false);
     } catch (err) {
@@ -64,8 +73,6 @@ const ImageUpload = ({
       toast('Failed To send media!');
       console.log('cloudnary error', err);
     }
-
-
   };
 
   const handleCancel = () => {
@@ -82,14 +89,22 @@ const ImageUpload = ({
           className="hidden"
           accept="image/png, image/gif, image/jpeg"
         />
-        <img className="w-6 h-6 text-gray-500" src={attachIcon} alt="file-icon" />
+        <img
+          className="w-6 h-6 text-gray-500"
+          src={attachIcon}
+          alt="file-icon"
+        />
       </label>
       <div className="flex justify-center items-center h-screen absolute">
         {showModal && (
           <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center">
             <div className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full">
               <div className="p-4">
-                <img src={image} alt="Preview" className="w-[500px] h-[300px] object-contain" />
+                <img
+                  src={image}
+                  alt="Preview"
+                  className="w-[500px] h-[300px] object-contain"
+                />
               </div>
               <input
                 type="text"
@@ -119,7 +134,6 @@ const ImageUpload = ({
           </div>
         )}
       </div>
-
     </>
   );
 };

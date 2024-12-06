@@ -151,7 +151,11 @@ const UserList = (props: IProps) => {
             {userList?.map((user: User) => (
               <li
                 onClick={() => {
-                  if ((!params?.id && params?.chatType === ChatTypeEnum.USER) || (params?.id !== user?._id && params?.chatType === ChatTypeEnum.USER)) {
+                  if (
+                    !params?.id ||
+                    (params?.id !== user?._id &&
+                      params?.chatType === ChatTypeEnum.USER)
+                  ) {
                     dispatch(clearCurrentChat());
                     navigate(`/chat/${ChatTypeEnum.USER}/${user?._id}`);
                   }
@@ -166,10 +170,11 @@ const UserList = (props: IProps) => {
                     alt="username"
                   />
                   <span
-                    className={`absolute w-3 h-3 ${onlineUsersList?.includes(user?._id)
-                      ? 'bg-green-600'
-                      : 'bg-red-600'
-                      }  rounded-full left-10 top-3`}
+                    className={`absolute w-3 h-3 ${
+                      onlineUsersList?.includes(user?._id)
+                        ? 'bg-green-600'
+                        : 'bg-red-600'
+                    }  rounded-full left-10 top-3`}
                   ></span>
                 </div>
 

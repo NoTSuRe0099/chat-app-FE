@@ -107,6 +107,8 @@ export const loadChatsAction = createAsyncThunk(
     //@ts-ignore
     thunkAPI.dispatch(loadCurrentChat(response?.data?.data));
 
+    if (params?.callback) params?.callback();
+
     return response.data;
   }
 );

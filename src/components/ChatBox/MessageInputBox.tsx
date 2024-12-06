@@ -1,14 +1,17 @@
 import EmojiPicker from 'emoji-picker-react';
-import React from 'react';
+import React, { useState } from 'react';
 import emojiIcon from '../../assets/emojiIcon.svg';
 import micIcon from '../../assets/micIcon.svg';
 import sendIcon from '../../assets/sendIcon.svg';
 import ImageUpload from './ImageUpload';
 import { MessageType } from '../../Enums';
-
+import { User } from '../../auth/AuthSlice';
 
 interface MessageInputBoxProps {
-  handleSubmitMessage: (params: { messageType: string, mediaUrl?: string; }) => void;
+  handleSubmitMessage: (params: {
+    messageType: string;
+    mediaUrl?: string;
+  }) => void;
   handleEmoji: (emojiObject: any) => void;
   setIsEmojiDrawerOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isEmojiDrawerOpen: boolean;
@@ -16,8 +19,9 @@ interface MessageInputBoxProps {
   message: string;
   focusedHandler: () => void;
   blurredHandler: () => void;
+  activlyTypingUserList: Record<string, boolean>;
+  chatUser: User;
 }
-
 
 const MessageInputBox: React.FC<MessageInputBoxProps> = ({
   handleSubmitMessage,
@@ -28,15 +32,28 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
   message,
   focusedHandler,
   blurredHandler,
+  activlyTypingUserList,
+  chatUser,
 }) => {
+  const [showModal, setShowModal] = useState(false);
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        handleSubmitMessage({ messageType: MessageType.TEXT });
+        if (message && !showModal) {
+          handleSubmitMessage({ messageType: MessageType.TEXT });
+        }
       }}
+      autoComplete='off'
       className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px]"
     >
+      {activlyTypingUserList?.[chatUser._id] && (
+        <div className="typing-indicator typing-in-chat-box-indicator absolute bottom-0">
+          <span className="dot"></span>
+          <span className="dot"></span>
+          <span className="dot"></span>
+        </div>
+      )}
       <button
         onClick={() => setIsEmojiDrawerOpen((prev) => !prev)}
         className="w-6 h-6 text-gray-500 relative"
@@ -48,11 +65,15 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
         <img className="text-gray-500" src={emojiIcon} alt="emoji-icon" />
       </button>
 
-      <ImageUpload setMessage={setMessage}
+      <ImageUpload
+        setMessage={setMessage}
         message={message}
         focusedHandler={focusedHandler}
         blurredHandler={blurredHandler}
-        handleSubmitMessage={handleSubmitMessage} />
+        handleSubmitMessage={handleSubmitMessage}
+        showModal={showModal}
+        setShowModal={setShowModal}
+      />
 
       <input
         type="text"
@@ -61,7 +82,6 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
         placeholder="Message"
         className="block w-full py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700"
         name="message"
-        required
         onFocus={focusedHandler}
         onBlur={blurredHandler}
       />

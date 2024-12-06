@@ -60,8 +60,13 @@ const CurrentChatWindow = (props: Iprops) => {
   const { page, totalPages } = pagination;
   const params = useParams();
 
-
-  const handleSubmitMessage = ({ messageType, mediaUrl }: { messageType: string, mediaUrl?: string; }) => {
+  const handleSubmitMessage = ({
+    messageType,
+    mediaUrl,
+  }: {
+    messageType: string;
+    mediaUrl?: string;
+  }) => {
     sendMessage({ message, mediaUrl: mediaUrl, messageType: messageType });
     setMessage('');
   };
@@ -102,29 +107,34 @@ const CurrentChatWindow = (props: Iprops) => {
       // Dispatch action with built query
       dispatch(
         //@ts-ignore
-        loadChatsAction({ queryParams: `?${queryParams.toString()}` })
+        loadChatsAction({
+          queryParams: `?${queryParams.toString()}`,
+          callback: handleScrollAfterLoad,
+        })
       );
-
-      // Handle scrolling logic after data load
-      handleScrollAfterLoad();
     } finally {
       setLoading(false);
     }
   };
 
   const handleScrollAfterLoad = () => {
-    if (!messageContainerRef?.current) return;
+    if (!scrollableDivRef?.current) return;
 
-    if (page === 1) {
-      // Scroll to bottom for the first page
-      messageContainerRef.current.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      // Scroll to a specific position for subsequent pages
-      messageContainerRef.current.scrollTo({
-        top: 1000, // Adjust the height as needed
-        behavior: 'smooth',
-      });
-    }
+    setTimeout(() => {
+      if (page === 1) {
+        // Scroll to bottom for the first page
+        scrollableDivRef.current.scrollTo({
+          top: scrollableDivRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      } else {
+        // Adjust position for subsequent pages
+        scrollableDivRef.current.scrollTo({
+          top: 1000, // Replace with a calculated offset if needed
+          behavior: 'smooth',
+        });
+      }
+    }, 0);
   };
 
   useEffect(() => {
@@ -135,11 +145,12 @@ const CurrentChatWindow = (props: Iprops) => {
   }, [page, params?.id, params?.chatType]);
 
   useEffect(() => {
-    setMessage("");
+    setMessage('');
+    // messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
   }, [params?.id, params?.chatType]);
 
   // Handler for scroll event
-  const handleScroll = useCallback(() => {
+  const handleScroll = () => {
     const div = scrollableDivRef.current;
     if (div) {
       // Check if user has scrolled to the top (or near the top, adjust threshold as needed)
@@ -150,20 +161,18 @@ const CurrentChatWindow = (props: Iprops) => {
         }
       }
     }
-  }, [loading, page, totalPages, dispatch]);
+  };
 
   useEffect(() => {
-    const div = scrollableDivRef.current;
-    if (div) {
-      div.addEventListener('scroll', handleScroll);
+    if (scrollableDivRef.current) {
+      scrollableDivRef.current.addEventListener('scroll', handleScroll);
     }
     return () => {
-      if (div) {
-        div.removeEventListener('scroll', handleScroll);
+      if (scrollableDivRef.current) {
+        scrollableDivRef.current.removeEventListener('scroll', handleScroll);
       }
-      // dispatch(clearCurrentChat());
     };
-  }, [handleScroll]);
+  }, [loading, page, totalPages, dispatch]);
 
   const { socket } = useSocket();
 
@@ -219,23 +228,26 @@ const CurrentChatWindow = (props: Iprops) => {
           openUserInvtModal={openUserInvtModal}
         />
 
-        <ChatContent scrollableDivRef={scrollableDivRef}
+        <ChatContent
+          scrollableDivRef={scrollableDivRef}
           chats={chats}
           user={user}
           getUserDetailsById={getUserDetailsById}
-          activlyTypingUserList={activlyTypingUserList}
-          chatUser={chatUser}
           messageContainerRef={messageContainerRef}
         />
 
-        <MessageInputBox handleSubmitMessage={handleSubmitMessage}
+        <MessageInputBox
+          handleSubmitMessage={handleSubmitMessage}
           handleEmoji={handleEomoji}
           setIsEmojiDrawerOpen={setIsEmojiDrawerOpen}
           isEmojiDrawerOpen={isEmojiDrawerOpen}
           setMessage={setMessage}
           message={message}
           focusedHandler={fucusedHandler}
-          blurredHandler={bluredHandler} />
+          blurredHandler={bluredHandler}
+          chatUser={chatUser}
+          activlyTypingUserList={activlyTypingUserList}
+        />
       </div>
     </>
   );

@@ -38,8 +38,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               alt="username"
             />
             <span
-              className={`absolute w-3 h-3 ${chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
-                } rounded-full left-6 top-1`}
+              className={`absolute w-3 h-3 ${
+                chatUser.isOnline ? 'bg-green-600' : 'bg-red-600'
+              } rounded-full left-6 top-1`}
             ></span>
           </div>
         )}

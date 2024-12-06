@@ -4,12 +4,24 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchAllUser, fetchGroupChatInvites } from '../../Actions/ChatActions';
 import { ChatTypeEnum, EventTypes } from '../../Enums';
-import { IChat, ISingleUserChat, IgroupChats, User, chatUser, sendMessageFn } from '../../Types/chatSliceTypes';
+import {
+  IChat,
+  ISingleUserChat,
+  IgroupChats,
+  User,
+  chatUser,
+  sendMessageFn,
+} from '../../Types/chatSliceTypes';
 import { selectAuth } from '../../auth/AuthSlice';
 import { useSocket } from '../../context/SocketContext';
 import CurrentChatWindow from './CurrentChatWindow';
 import UserList from './UserList';
-import { flushMessages, pushNewCurrentChat, pushNewMessage, selectChatState } from './chatSlice';
+import {
+  flushMessages,
+  pushNewCurrentChat,
+  pushNewMessage,
+  selectChatState,
+} from './chatSlice';
 
 const audioUrl = '/notification-sound-7062.mp3';
 
@@ -25,7 +37,9 @@ const ChatPage = () => {
   const [currentChatUser, setCurrentChatUser] = useState<User | null>(null);
   const [onlineUsersList, setOnlineUsersList] = useState<string[]>([]);
   const [toggleUserList, setToggleUserList] = useState(true);
-  const [currentChatGroup, setCurrentChatGroup] = useState<IgroupChats | null>(null);
+  const [currentChatGroup, setCurrentChatGroup] = useState<IgroupChats | null>(
+    null
+  );
 
   const chatUser: chatUser = {
     ...currentChatUser!,
@@ -38,9 +52,10 @@ const ChatPage = () => {
       setCurrentChatUser(user!);
       setToggleUserList(false);
     } else if (params?.id && params?.chatType === ChatTypeEnum.GROUP_CHAT) {
-      const groupChatState = params?.chatType === ChatTypeEnum.GROUP_CHAT
-        ? chatState?.chatGroups?.find((it) => it?._id === params?.id)
-        : null;
+      const groupChatState =
+        params?.chatType === ChatTypeEnum.GROUP_CHAT
+          ? chatState?.chatGroups?.find((it) => it?._id === params?.id)
+          : null;
       setCurrentChatGroup(groupChatState);
       setToggleUserList(false);
     } else {
@@ -77,7 +92,9 @@ const ChatPage = () => {
     });
 
     greeting.addEventListener('click', function () {
-      const targetURL = `${import.meta.env.VITE_BASE_API_URL}/chat/${userObj?._id}`;
+      const targetURL = `${import.meta.env.VITE_BASE_API_URL}/chat/${
+        userObj?._id
+      }`;
 
       // Create a button to trigger the new tab
       const openButton = document.createElement('button');

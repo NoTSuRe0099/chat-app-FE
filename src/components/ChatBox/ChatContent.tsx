@@ -16,9 +16,7 @@ interface ChatsContentProps {
   scrollableDivRef: MutableRefObject<HTMLDivElement | null>;
   chats: ICurrentChats[];
   user: User;
-  getUserDetailsById: (id: string) => { name: string; } | undefined;
-  activlyTypingUserList: Record<string, boolean>;
-  chatUser: User;
+  getUserDetailsById: (id: string) => { name: string } | undefined;
   messageContainerRef: MutableRefObject<HTMLDivElement | null>;
 }
 
@@ -27,8 +25,6 @@ const ChatContent: React.FC<ChatsContentProps> = ({
   chats,
   user,
   getUserDetailsById,
-  activlyTypingUserList,
-  chatUser,
   messageContainerRef,
 }) => {
   return (
@@ -41,11 +37,15 @@ const ChatContent: React.FC<ChatsContentProps> = ({
           {chats.map((chat, index) => (
             <li
               key={`_${index}`}
-              className={`flex ${chat?.senderId === user?._id ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${
+                chat?.senderId === user?._id ? 'justify-end' : 'justify-start'
+              }`}
             >
               <div className="relative max-w-xl md:w-auto break-words px-5 py-3 bg-white rounded-lg shadow-lg h-auto">
                 <span className="block text-sm font-medium text-gray-900 mb-1">
-                  {chat?.senderId === user?._id ? 'You' : getUserDetailsById(chat?.senderId)?.name}
+                  {chat?.senderId === user?._id
+                    ? 'You'
+                    : getUserDetailsById(chat?.senderId)?.name}
                 </span>
                 {chat?.messageType === 'MEDIA' ? (
                   <>
@@ -55,14 +55,20 @@ const ChatContent: React.FC<ChatsContentProps> = ({
                       className="max-w-xs max-h-xs w-32 h-32 object-contain"
                     />
                     {chat?.message.length > 0 && (
-                      <p className="block text-gray-700 w-max text-left mt-2">{chat?.message}</p>
+                      <p className="block text-gray-700 w-max text-left mt-2">
+                        {chat?.message}
+                      </p>
                     )}
                   </>
                 ) : (
-                  <p className="block text-gray-700 w-max text-left">{chat?.message}</p>
+                  <p className="block text-gray-700 w-max text-left">
+                    {chat?.message}
+                  </p>
                 )}
                 <span className="block mt-2 text-xs text-gray-500">
-                  {new Date(chat?.sentAt).toLocaleTimeString() + " " + new Date(chat?.sentAt).toLocaleDateString()}
+                  {new Date(chat?.sentAt).toLocaleTimeString() +
+                    ' ' +
+                    new Date(chat?.sentAt).toLocaleDateString()}
                 </span>
               </div>
             </li>
@@ -70,16 +76,12 @@ const ChatContent: React.FC<ChatsContentProps> = ({
         </ul>
       ) : (
         <div className="flex items-center justify-center h-full text-center">
-          <p className="text-lg font-semibold text-gray-500">No messages to display.</p>
+          <p className="text-lg font-semibold text-gray-500">
+            No messages to display.
+          </p>
         </div>
       )}
-      {activlyTypingUserList?.[chatUser._id] && (
-        <div className="typing-indicator typing-in-chat-box-indicator sticky">
-          <span className="dot"></span>
-          <span className="dot"></span>
-          <span className="dot"></span>
-        </div>
-      )}
+
       <div ref={messageContainerRef} />
     </div>
   );
