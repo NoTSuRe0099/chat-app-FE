@@ -7,6 +7,7 @@ import axios, {
 import toast from 'react-hot-toast';
 import { store } from '../store';
 import { clearUser } from '../auth/AuthSlice';
+import { startLoading, stopLoading } from '../reducers/UISlice';
 
 // Define a common API response structure
 interface ApiResponse<T> {
@@ -74,15 +75,17 @@ const callApi = async <T>(
   config: AxiosRequestConfig
 ): Promise<ApiResponse<T>> => {
   try {
+    store && store.dispatch(startLoading());
     const response: AxiosResponse<T> = await apiInstance(config);
     const { data } = response;
-
+    store && store.dispatch(stopLoading());
     if (hasMessageProperty<T>(data)) {
       if (data.message?.trim()?.length) toast.success(data.message);
     }
 
     return { data };
   } catch (error: any) {
+    store && store.dispatch(stopLoading());
     handleApiError(error);
     console.error('Error in API call:', error); // Log the actual error object for debugging
     throw error;
@@ -93,15 +96,17 @@ export const callPublicApi = async <T>(
   config: AxiosRequestConfig
 ): Promise<ApiResponse<T>> => {
   try {
+    store && store.dispatch(startLoading());
     const response: AxiosResponse<T> = await publicApi(config);
     const { data } = response;
 
+    store && store.dispatch(stopLoading());
     if (hasMessageProperty<T>(data)) {
       if (data.message?.trim()?.length) toast.success(data.message);
     }
-
     return { data };
   } catch (error: any) {
+    store && store.dispatch(stopLoading());
     handleApiError(error);
     console.error('Error in API call:', error); // Log the actual error object for debugging
     throw error;

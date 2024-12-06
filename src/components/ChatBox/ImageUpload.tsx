@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import attachIcon from '../../assets/attachIcon.svg';
 import axios from 'axios';
 import { MessageType } from '../../Enums';
+import { useDispatch } from 'react-redux';
+import { startLoading, stopLoading } from '../../reducers/UISlice';
+import toast from 'react-hot-toast';
 
 const uploadPreset = import.meta.env.VITE_UPLOAD_PRESET;
 const cloudName = import.meta.env.VITE_CLOUD_NAME;
@@ -25,6 +28,7 @@ const ImageUpload = ({
 
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const dispatch = useDispatch();
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event?.target?.files[0];
@@ -40,18 +44,27 @@ const ImageUpload = ({
     }
   };
 
-  const handleSend = () => {
-    const formData = new FormData();
-    formData.append('file', image);
-    formData.append('upload_preset', uploadPreset);
+  const handleSend = async () => {
+    try {
+      dispatch(startLoading());
 
-    axios.post(url, formData)
-      .then((response) => {
-        //@ts-ignore
-        handleSubmitMessage({ messageType: MessageType.MEDIA, mediaUrl: response?.data?.url });
-      });
+      const formData = new FormData();
+      formData.append('file', image);
+      formData.append('upload_preset', uploadPreset);
 
-    setShowModal(false);
+      await axios.post(url, formData)
+        .then((response) => {
+          //@ts-ignore
+          handleSubmitMessage({ messageType: MessageType.MEDIA, mediaUrl: response?.data?.url });
+        });
+      dispatch(stopLoading());
+      setShowModal(false);
+    } catch (err) {
+      dispatch(stopLoading());
+      toast('Failed To send media!');
+      console.log('cloudnary error', err);
+    }
+
 
   };
 
@@ -85,7 +98,6 @@ const ImageUpload = ({
                 placeholder="Message"
                 className="block w-[490px] py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700 mb-4"
                 name="message"
-                required
                 onFocus={focusedHandler}
                 onBlur={blurredHandler}
               />
