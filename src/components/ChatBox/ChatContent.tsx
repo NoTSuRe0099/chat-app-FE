@@ -1,13 +1,6 @@
 import React, { MutableRefObject } from 'react';
 import { ICurrentChats } from '../../Types/chatSliceTypes';
 
-interface Chat {
-  senderId: string;
-  message: string;
-  sentAt: string;
-  messageType?: string; // Add this line
-}
-
 interface User {
   _id: string;
 }
@@ -16,7 +9,7 @@ interface ChatsContentProps {
   scrollableDivRef: MutableRefObject<HTMLDivElement | null>;
   chats: ICurrentChats[];
   user: User;
-  getUserDetailsById: (id: string) => { name: string } | undefined;
+  getUserDetailsById: (id: string) => { name: string; } | undefined;
   messageContainerRef: MutableRefObject<HTMLDivElement | null>;
 }
 
@@ -37,9 +30,8 @@ const ChatContent: React.FC<ChatsContentProps> = ({
           {chats.map((chat, index) => (
             <li
               key={`_${index}`}
-              className={`flex ${
-                chat?.senderId === user?._id ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex ${chat?.senderId === user?._id ? 'justify-end' : 'justify-start'
+                }`}
             >
               <div className="relative max-w-xl md:w-auto break-words px-5 py-3 bg-white rounded-lg shadow-lg h-auto">
                 <span className="block text-sm font-medium text-gray-900 mb-1">
@@ -65,7 +57,7 @@ const ChatContent: React.FC<ChatsContentProps> = ({
                     {chat?.message}
                   </p>
                 )}
-                <span className="block mt-2 text-xs text-gray-500">
+                <span className="block mt-2 text-[10px] text-gray-500">
                   {new Date(chat?.sentAt).toLocaleTimeString() +
                     ' ' +
                     new Date(chat?.sentAt).toLocaleDateString()}

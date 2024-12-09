@@ -92,9 +92,8 @@ const ChatPage = () => {
     });
 
     greeting.addEventListener('click', function () {
-      const targetURL = `${import.meta.env.VITE_BASE_API_URL}/chat/${
-        userObj?._id
-      }`;
+      const targetURL = `${import.meta.env.VITE_BASE_API_URL}/chat/${userObj?._id
+        }`;
 
       // Create a button to trigger the new tab
       const openButton = document.createElement('button');

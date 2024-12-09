@@ -34,6 +34,7 @@ const ImageUpload = ({
   setShowModal,
 }: IProps) => {
   const [image, setImage] = useState(null);
+  const [uploadProgress, setUplaodProgress] = useState(0);
 
   const dispatch = useDispatch();
 
@@ -50,25 +51,32 @@ const ImageUpload = ({
       reader.readAsDataURL(file);
     }
   };
-
+  console.log('uploadProgress', uploadProgress);
   const handleSend = async () => {
     try {
       dispatch(startLoading());
-
+      setUplaodProgress(0);
       const formData = new FormData();
       formData.append('file', image);
       formData.append('upload_preset', uploadPreset);
 
-      await axios.post(url, formData).then((response) => {
-        //@ts-ignore
+      await axios.post(url, formData, {
+        onUploadProgress: (event) => {
+          const progress = event?.loaded ? Math.round((event.loaded * 100) / event.total) : 0;
+          setUplaodProgress(progress);
+
+        }
+      }).then((response) => {
         handleSubmitMessage({
           messageType: MessageType.MEDIA,
           mediaUrl: response?.data?.url,
         });
       });
+      setUplaodProgress(0);
       dispatch(stopLoading());
       setShowModal(false);
     } catch (err) {
+      setUplaodProgress(0);
       dispatch(stopLoading());
       toast('Failed To send media!');
       console.log('cloudnary error', err);
@@ -79,6 +87,8 @@ const ImageUpload = ({
     setShowModal(false);
     setImage(null);
   };
+
+
 
   return (
     <>
@@ -111,11 +121,15 @@ const ImageUpload = ({
                 onChange={(e) => setMessage(e.target.value)}
                 value={message}
                 placeholder="Message"
-                className="block w-[490px] py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700 mb-4"
+                className="block w-[490px] py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700 mb-2"
                 name="message"
                 onFocus={focusedHandler}
                 onBlur={blurredHandler}
               />
+              {uploadProgress ? <div className="flex w-[90%] h-4 mx-auto bg-gray-200 rounded-full overflow-hidden mb-2">
+                <div className="flex flex-col justify-center rounded-full overflow-hidden bg-blue-600 text-xs text-white text-center whitespace-nowrap transition duration-500"
+                  style={{ width: `${uploadProgress}%` }}>{uploadProgress}%</div>
+              </div> : null}
               <div className="border-t p-4 flex justify-end space-x-4">
                 <button
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"

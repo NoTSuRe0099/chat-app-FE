@@ -24,7 +24,7 @@ import {
   selectChatState,
 } from './chatSlice';
 
-interface Iprops {
+interface IProps {
   chatUser?: chatUser;
   messages: ISingleUserChat[] | IChat[];
   user: User;
@@ -35,20 +35,20 @@ interface Iprops {
   chatGroupInfo?: IgroupChats;
 }
 
-const CurrentChatWindow = (props: Iprops) => {
-  const {
-    chatUser,
-    user,
-    messages = [],
-    sendMessage,
-    messageContainerRef,
-    openUserList,
-    isGroupChat = false,
-    chatGroupInfo,
-  } = props;
+const CurrentChatWindow = ({
+  chatUser,
+  user,
+  messages = [],
+  sendMessage,
+  messageContainerRef,
+  openUserList,
+  isGroupChat = false,
+  chatGroupInfo,
+}: IProps) => {
   const [message, setMessage] = useState('');
   const [isEmojiDrawerOpen, setIsEmojiDrawerOpen] = useState(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [isInvtUserModalOpen, setIsInvtUserModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const scrollableDivRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const chatState = useSelector(selectChatState);
@@ -56,109 +56,18 @@ const CurrentChatWindow = (props: Iprops) => {
   const { pagination, chats } = currentChat;
   const { page, totalPages } = pagination;
   const params = useParams();
-
-  const handleSubmitMessage = ({
-    messageType,
-    mediaUrl,
-  }: {
-    messageType: string;
-    mediaUrl?: string;
-  }) => {
-    sendMessage({ message, mediaUrl: mediaUrl, messageType: messageType });
-    setMessage('');
-  };
-
-  const [isInvtUserModalOpen, setIsInvtUserModalOpen] = useState(false);
-
-  const openUserInvtModal = () => {
-    setIsInvtUserModalOpen(true);
-  };
-
-  const closeUserInvtModal = () => {
-    setIsInvtUserModalOpen(false);
-  };
-
-  const getUserDetailsById = (userId: string) => {
-    return chatState.users?.find((user) => user?._id === userId);
-  };
-
-  // Function to load more data when scroll reaches the bottom
-  const loadMoreData = async () => {
-    if (loading) return; // Prevent loading if already in progress
-
-    setLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: '12',
-        type: isGroupChat ? ChatTypeEnum.GROUP_CHAT : ChatTypeEnum.USER, // Adjust based on chat type
-      });
-
-      // Append the correct ID based on chat type
-      if (isGroupChat && chatGroupInfo?._id) {
-        queryParams.append('groupId', chatGroupInfo._id);
-      } else if (chatUser?._id) {
-        queryParams.append('receiverId', params?.id);
-      }
-
-      // Dispatch action with built query
-      dispatch(
-        //@ts-ignore
-        loadChatsAction({
-          queryParams: `?${queryParams.toString()}`,
-          callback: handleScrollAfterLoad,
-        })
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleScrollAfterLoad = () => {
-    if (!scrollableDivRef?.current) return;
-
-    setTimeout(() => {
-      if (page === 1) {
-        // Scroll to bottom for the first page
-        scrollableDivRef.current.scrollTo({
-          top: scrollableDivRef.current.scrollHeight,
-          behavior: 'smooth',
-        });
-      } else {
-        // Adjust position for subsequent pages
-        scrollableDivRef.current.scrollTo({
-          top: 1000, // Replace with a calculated offset if needed
-          behavior: 'smooth',
-        });
-      }
-    }, 0);
-  };
+  const { socket } = useSocket();
 
   useEffect(() => {
-    if (page) {
-      loadMoreData();
+    if (socket) {
+      socket.on('IS_USER_TYPING', handleTypingStatus);
     }
-    console.log('params?.id', params?.id);
-  }, [page, params?.id, params?.chatType]);
 
-  useEffect(() => {
-    setMessage('');
-    // messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [params?.id, params?.chatType]);
-
-  // Handler for scroll event
-  const handleScroll = () => {
-    const div = scrollableDivRef.current;
-    if (div) {
-      // Check if user has scrolled to the top (or near the top, adjust threshold as needed)
-      if (div.scrollTop === 0 && !loading) {
-        // Only load more data if there are more pages to load
-        if (page < totalPages) {
-          dispatch(incrementChatLoadPage());
-        }
-      }
-    }
-  };
+    return () => {
+      bluredHandler();
+      socket?.off('IS_USER_TYPING', handleTypingStatus);
+    };
+  }, [socket]);
 
   useEffect(() => {
     if (scrollableDivRef.current) {
@@ -171,20 +80,20 @@ const CurrentChatWindow = (props: Iprops) => {
     };
   }, [loading, page, totalPages, dispatch]);
 
-  const { socket } = useSocket();
+  useEffect(() => {
+    if (page) {
+      loadMoreData();
+    }
+  }, [page, params?.id, params?.chatType]);
 
   useEffect(() => {
-    if (socket) {
-      socket?.on('IS_USER_TYPING', (data) => {
-        const { senderId, isTyping } = data;
-        dispatch(changeIsTypingUserStatus({ senderId, isTyping }));
-      });
-    }
+    setMessage('');
+  }, [params?.id, params?.chatType]);
 
-    return () => {
-      bluredHandler();
-    };
-  }, [socket]);
+  const handleTypingStatus = (data: { senderId: string; isTyping: boolean; }) => {
+    const { senderId, isTyping } = data;
+    dispatch(changeIsTypingUserStatus({ senderId, isTyping }));
+  };
 
   const fucusedHandler = () => {
     socket?.emit('USER_TYPING', {
@@ -202,8 +111,92 @@ const CurrentChatWindow = (props: Iprops) => {
     });
   };
 
-  const handleEomoji = (e) => {
-    setMessage((prev) => prev + e?.emoji);
+  const handleEmoji = (e: { emoji: string; }) => {
+    setMessage((prev) => prev + e.emoji);
+  };
+
+  const openUserInvtModal = () => {
+    setIsInvtUserModalOpen(true);
+  };
+
+  const closeUserInvtModal = () => {
+    setIsInvtUserModalOpen(false);
+  };
+
+  const getUserDetailsById = (userId: string) => {
+    return chatState.users?.find((user) => user?._id === userId);
+  };
+
+  const handleSubmitMessage = ({
+    messageType,
+    mediaUrl,
+  }: {
+    messageType: string;
+    mediaUrl?: string;
+  }) => {
+    sendMessage({ message, mediaUrl, messageType });
+    scrollToBottom();
+    setMessage('');
+  };
+
+  const scrollToBottom = () => {
+    if (scrollableDivRef.current) {
+      scrollableDivRef.current.scrollTo({
+        top: scrollableDivRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const handleScroll = () => {
+    const div = scrollableDivRef.current;
+    if (div && div.scrollTop === 0 && !loading && page < totalPages) {
+      dispatch(incrementChatLoadPage());
+    }
+  };
+
+  const loadMoreData = async () => {
+    if (loading) return;
+
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '12',
+        type: isGroupChat ? ChatTypeEnum.GROUP_CHAT : ChatTypeEnum.USER,
+      });
+
+      if (isGroupChat && chatGroupInfo?._id) {
+        queryParams.append('groupId', chatGroupInfo._id);
+      } else if (chatUser?._id) {
+        queryParams.append('receiverId', params.id as string);
+      }
+
+      dispatch(
+        //@ts-ignore
+        loadChatsAction({
+          queryParams: `?${queryParams.toString()}`,
+          callback: handleScrollAfterLoad,
+        })
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleScrollAfterLoad = () => {
+    if (!scrollableDivRef.current) return;
+
+    setTimeout(() => {
+      if (page === 1) {
+        scrollToBottom();
+      } else {
+        scrollableDivRef.current.scrollTo({
+          top: 1000,
+          behavior: 'smooth',
+        });
+      }
+    }, 0);
   };
 
   return (
@@ -235,7 +228,7 @@ const CurrentChatWindow = (props: Iprops) => {
 
         <MessageInputBox
           handleSubmitMessage={handleSubmitMessage}
-          handleEmoji={handleEomoji}
+          handleEmoji={handleEmoji}
           setIsEmojiDrawerOpen={setIsEmojiDrawerOpen}
           isEmojiDrawerOpen={isEmojiDrawerOpen}
           setMessage={setMessage}
