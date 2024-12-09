@@ -141,10 +141,13 @@ const CurrentChatWindow = ({
 
   const scrollToBottom = () => {
     if (scrollableDivRef.current) {
-      scrollableDivRef.current.scrollTo({
-        top: scrollableDivRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
+      setTimeout(() => {
+        scrollableDivRef.current.scrollTo({
+          top: scrollableDivRef.current.scrollHeight * scrollableDivRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }, 0);
+
     }
   };
 
@@ -192,7 +195,7 @@ const CurrentChatWindow = ({
         scrollToBottom();
       } else {
         scrollableDivRef.current.scrollTo({
-          top: 1000,
+          top: 50,
           behavior: 'smooth',
         });
       }

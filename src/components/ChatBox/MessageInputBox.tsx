@@ -45,10 +45,10 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
         }
       }}
       autoComplete='off'
-      className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px]"
+      className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px] relative"
     >
       {activlyTypingUserList?.[chatUser._id] && (
-        <div className="typing-indicator typing-in-chat-box-indicator absolute bottom-0">
+        <div className="typing-indicator typing-in-chat-box-indicator absolute bottom-2">
           <span className="dot"></span>
           <span className="dot"></span>
           <span className="dot"></span>

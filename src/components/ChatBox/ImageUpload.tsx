@@ -51,7 +51,6 @@ const ImageUpload = ({
       reader.readAsDataURL(file);
     }
   };
-  console.log('uploadProgress', uploadProgress);
   const handleSend = async () => {
     try {
       dispatch(startLoading());
@@ -87,8 +86,6 @@ const ImageUpload = ({
     setShowModal(false);
     setImage(null);
   };
-
-
 
   return (
     <>

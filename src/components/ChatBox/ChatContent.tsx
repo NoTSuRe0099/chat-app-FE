@@ -30,8 +30,7 @@ const ChatContent: React.FC<ChatsContentProps> = ({
           {chats.map((chat, index) => (
             <li
               key={`_${index}`}
-              className={`flex ${chat?.senderId === user?._id ? 'justify-end' : 'justify-start'
-                }`}
+              className={`flex ${chat?.senderId === user?._id ? 'justify-end' : 'justify-start'}`}
             >
               <div className="relative max-w-xl md:w-auto break-words px-5 py-3 bg-white rounded-lg shadow-lg h-auto">
                 <span className="block text-sm font-medium text-gray-900 mb-1">
@@ -73,7 +72,7 @@ const ChatContent: React.FC<ChatsContentProps> = ({
           </p>
         </div>
       )}
-
+      <div ref={scrollableDivRef} />
       <div ref={messageContainerRef} />
     </div>
   );

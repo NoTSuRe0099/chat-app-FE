@@ -154,10 +154,11 @@ const ChatPage = () => {
           );
         }
 
-        messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
-
+        setTimeout(() => {
+          messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 0);
+        
         const userId = params?.id;
-
         if (userId !== data?.senderId) {
           const user = getUserByUserId(data?.senderId);
           showNotification(
