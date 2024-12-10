@@ -29,6 +29,7 @@ const initialState: IChatState = {
   usersForGroupInvt: [],
   currentUsersGroupInvites: [],
   activlyTypingUserList: {},
+  activlyTypingGroupChatList: {},
 };
 
 const ChatSlice = createSlice({
@@ -41,8 +42,6 @@ const ChatSlice = createSlice({
       state.users = action?.payload || [];
     },
     loadCurrentChat: (state, action: PayloadAction<ICurrentChat>) => {
-      console.log('asdasda', action?.payload);
-
       const _chats = [...action?.payload?.chats, ...state?.currentChat?.chats];
       state.currentChat.chats = _chats;
       state.currentChat.pagination = action?.payload?.pagination;
@@ -88,13 +87,23 @@ const ChatSlice = createSlice({
       state.chatGroupMessages = chatGroupMessages;
     },
     changeIsTypingUserStatus: (state, action: PayloadAction<any>) => {
-      const { senderId, isTyping } = action.payload;
-      console.log('action.payload', action.payload);
+      const { senderId, groupId, isTyping } = action.payload;
 
-      if (isTyping) {
-        state.activlyTypingUserList[senderId] = true;
+      if (groupId) {
+        if (isTyping) {
+          state.activlyTypingGroupChatList[groupId] = {
+            ...state.activlyTypingGroupChatList?.[groupId],
+            [senderId]: true,
+          };
+        } else {
+          delete state.activlyTypingGroupChatList[groupId][senderId];
+        }
       } else {
-        delete state.activlyTypingUserList[senderId];
+        if (isTyping) {
+          state.activlyTypingUserList[senderId] = true;
+        } else {
+          delete state.activlyTypingUserList[senderId];
+        }
       }
     },
   },

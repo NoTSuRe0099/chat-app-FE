@@ -42,6 +42,7 @@ export interface IChatState {
   usersForGroupInvt: IUsersForGroupInvt[];
   currentUsersGroupInvites: IGroupInvites[];
   activlyTypingUserList: { [key: string]: boolean };
+  activlyTypingGroupChatList: { [key: string]: { [key: string]: boolean } };
 }
 
 export interface IUserDetails {

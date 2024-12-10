@@ -60,7 +60,9 @@ const CurrentChatWindow = ({
 
   useEffect(() => {
     if (socket) {
-      socket.on('IS_USER_TYPING', handleTypingStatus);
+      socket.on('IS_USER_TYPING', (data) => {
+        handleTypingStatus(data);
+      });
     }
 
     return () => {
@@ -90,15 +92,17 @@ const CurrentChatWindow = ({
     setMessage('');
   }, [params?.id, params?.chatType]);
 
-  const handleTypingStatus = (data: { senderId: string; isTyping: boolean; }) => {
-    const { senderId, isTyping } = data;
-    dispatch(changeIsTypingUserStatus({ senderId, isTyping }));
+  const handleTypingStatus = (data: { senderId: string; isTyping: boolean; groupId: string; }) => {
+    const { senderId, isTyping, groupId } = data;
+    dispatch(changeIsTypingUserStatus({ senderId, isTyping, groupId }));
   };
 
   const fucusedHandler = () => {
     socket?.emit('USER_TYPING', {
       senderId: user?._id,
-      receiverId: chatUser?._id,
+      groupId: params?.chatType === ChatTypeEnum.GROUP_CHAT ? params?.id : "",
+      receiverId: params?.chatType === ChatTypeEnum.USER ? params?.id : "",
+      groupUserList: params?.chatType === ChatTypeEnum.GROUP_CHAT ? chatGroupInfo?.userList?.map(({ _id }) => _id) : null,
       isTyping: true,
     });
   };
@@ -106,7 +110,9 @@ const CurrentChatWindow = ({
   const bluredHandler = () => {
     socket?.emit('USER_TYPING', {
       senderId: user?._id,
-      receiverId: chatUser?._id,
+      groupId: params?.chatType === ChatTypeEnum.GROUP_CHAT ? params?.id : "",
+      receiverId: params?.chatType === ChatTypeEnum.USER ? params?.id : "",
+      groupUserList: params?.chatType === ChatTypeEnum.GROUP_CHAT ? chatGroupInfo?.userList?.map(({ _id }) => _id) : null,
       isTyping: false,
     });
   };
@@ -174,12 +180,6 @@ const CurrentChatWindow = ({
       } else if (!isGroupChat && chatUser?._id) {
         queryParams.append('receiverId', params.id as string);
       }
-      console.log('queryParams', {
-        queryParams: queryParams.toString(), isGroupChat,
-        chatGroupInfo,
-        chatUser
-      });
-
 
       if ((isGroupChat && chatGroupInfo?._id) || (!isGroupChat && chatUser?._id)) {
         dispatch(

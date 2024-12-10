@@ -163,7 +163,6 @@ const ChatPage = () => {
     if (socket) {
       // Handler for individual messages
       socket?.on(EventTypes.RECEIVE_MESSAGE, (data: ISingleUserChat) => {
-        console.log('user data', data);
         dispatch(pushNewMessage({ id: data?.senderId, chat: data }));
         if (chatUser?._id === data?.senderId) {
           dispatch(

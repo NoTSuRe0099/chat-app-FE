@@ -41,9 +41,8 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
 }) => {
   const [showModal, setShowModal] = useState(false);
   const params = useParams();
-  const { id, chatType } = params;
-  console.log('chatUser._id', { id, chatUser: chatUser._id, chatGroupInfo });
-  const isUserTyping = activlyTypingUserList?.[chatUser._id] && (id === chatUser._id || id === chatGroupInfo?._id);
+  const { id } = params;
+  const isUserTyping = activlyTypingUserList?.[chatUser?._id] && (id === chatUser?._id || id === chatGroupInfo?._id);
   return (
     <form
       onSubmit={(e) => {

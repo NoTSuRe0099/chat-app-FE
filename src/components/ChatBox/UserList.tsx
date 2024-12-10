@@ -31,7 +31,7 @@ const UserList = ({ userList = [], onlineUsersList }: IProps) => {
   const authState = useSelector(selectAuth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { chatGroups, currentUsersGroupInvites, activlyTypingUserList } = chatState;
+  const { chatGroups, currentUsersGroupInvites, activlyTypingUserList, activlyTypingGroupChatList } = chatState;
   const params = useParams();
 
   useEffect(() => {
@@ -85,6 +85,20 @@ const UserList = ({ userList = [], onlineUsersList }: IProps) => {
       navigate(`/chat/${type}/${id}`);
     }
   };
+  const getTypingStatus = (groupId: string, userList: User[], activlyTypingGroupChatList: { [key: string]: { [key: string]: boolean; }; }) => {
+    const typingUsers = userList.filter(user => activlyTypingGroupChatList?.[groupId]?.[user?._id]);
+
+    const typingCount = typingUsers.length;
+
+    if (typingCount === 0) {
+      return getRecentMessage(groupId);
+    } else if (typingCount === 1) {
+      return `${typingUsers[0].name} is typing...`;
+    } else {
+      return `${typingCount} users are typing...`;
+    }
+  };
+
 
   return (
     <>
@@ -198,8 +212,9 @@ const UserList = ({ userList = [], onlineUsersList }: IProps) => {
                     </span>
                   </div>
                   <span className="block ml-2 text-sm text-gray-600">
-                    {getRecentMessage(group?._id)}
+                    {getTypingStatus(group._id, userList, activlyTypingGroupChatList)}
                   </span>
+                  {/* <span className="block ml-2 text-sm text-gray-600">{getRecentMessage(group?._id)}</span> */}
                 </div>
               </li>
             ))}
