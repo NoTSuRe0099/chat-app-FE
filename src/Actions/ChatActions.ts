@@ -88,10 +88,8 @@ export const groupInvitationAction = createAsyncThunk(
       url: `/chat/invtRequestAction`,
       data: data,
     });
-    //@ts-ignore
-    thunkAPI.dispatch(fetchGroupChatInvites());
-    //@ts-ignore
-    thunkAPI.dispatch(fetchMyChatgroups());
+    thunkAPI.dispatch(fetchGroupChatInvites(null) as any);
+    thunkAPI.dispatch(fetchMyChatgroups(null) as any);
 
     return response.data;
   }
@@ -104,7 +102,6 @@ export const loadChatsAction = createAsyncThunk(
       method: 'GET',
       url: `/chat/loadChats${params?.queryParams}`,
     });
-    //@ts-ignore
     thunkAPI.dispatch(loadCurrentChat(response?.data?.data));
 
     if (params?.callback) params?.callback();

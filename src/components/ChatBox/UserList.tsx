@@ -16,81 +16,75 @@ import { useSocket } from '../../context/SocketContext';
 import notificationIcon from '../../assets/notificationIcon.svg';
 import activeNotification from '../../assets/activeNotification.svg';
 import GroupInvitationsModal from '../GroupInvitationsModal/GroupInvitationsModal';
+
 interface IProps {
   userList: User[];
   onlineUsersList: string[];
 }
 
-const UserList = (props: IProps) => {
+const UserList = ({ userList = [], onlineUsersList }: IProps) => {
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
-  const [isNotificationModalOpen, setOpenNotificationModalOpen] =
-    useState(false);
-  const { userList = [], onlineUsersList } = props;
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+
   const { socket } = useSocket();
   const chatState = useSelector(selectChatState);
   const authState = useSelector(selectAuth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { chatGroups, currentUsersGroupInvites, activlyTypingUserList } =
-    chatState;
+  const { chatGroups, currentUsersGroupInvites, activlyTypingUserList } = chatState;
+  const params = useParams();
+
+  useEffect(() => {
+    dispatch(fetchMyChatgroups(null) as any);
+    dispatch(fetchGroupChatInvites(null) as any);
+  }, [dispatch]);
+
+  useEffect(() => {
+    chatGroups?.forEach((group) => {
+      socket?.emit('JOIN_GROUP', { groupId: group?._id });
+    });
+  }, [chatGroups, socket]);
+
   const openCreateGroupModal = () => {
     setIsCreateGroupModalOpen(true);
   };
-
-  useEffect(() => {
-    //@ts-ignore
-    dispatch(fetchMyChatgroups());
-    //@ts-ignore
-    dispatch(fetchGroupChatInvites());
-  }, []);
-
-  useEffect(() => {
-    if (chatState?.chatGroups?.length) {
-      chatState?.chatGroups?.forEach((it) => {
-        socket?.emit('JOIN_GROUP', { groupId: it?._id });
-      });
-    }
-  }, [chatState?.chatGroups]);
 
   const closeCreateGroupModal = () => {
     setIsCreateGroupModalOpen(false);
   };
 
   const logoutHandler = () => {
-    //@ts-ignore
-    dispatch(logoutAction());
+    dispatch(logoutAction() as any);
     navigate('/login');
   };
-  const getRecentMessage = (userId: string): string => {
-    const chatObj =
-      chatState?.chats?.[userId]?.[chatState?.chats?.[userId]?.length - 1];
 
-    return chatState?.chats?.[userId]
-      ? chatObj?.senderId === authState?.user?._id
-        ? `You: ${chatObj?.message}`
-        : chatObj?.message
+  const getRecentMessage = (userId: string): string => {
+    const chatObj = chatState?.chats?.[userId]?.slice(-1)[0];
+    return chatObj
+      ? chatObj.senderId === authState.user?._id
+        ? `You: ${chatObj.message}`
+        : chatObj.message
       : 'No Messages';
   };
 
   const openNotificationModal = () => {
-    setOpenNotificationModalOpen(true);
+    setIsNotificationModalOpen(true);
   };
 
   const closeNotificationModal = () => {
-    setOpenNotificationModalOpen(false);
+    setIsNotificationModalOpen(false);
   };
 
-  const groupInvitationActionHandler = (
-    invitationId: string,
-    isAccepted: boolean
-  ) => {
-    dispatch(
-      //@ts-ignore
-      groupInvitationAction({ id: invitationId, isAccepted: isAccepted })
-    );
+  const groupInvitationActionHandler = (invitationId: string, isAccepted: boolean) => {
+    dispatch(groupInvitationAction({ id: invitationId, isAccepted }) as any);
   };
 
-  const params = useParams();
+  const handleChatClick = (id: string, type: ChatTypeEnum) => {
+    if (params?.id !== id) {
+      dispatch(clearCurrentChat());
+      navigate(`/chat/${type}/${id}`);
+    }
+  };
 
   return (
     <>
@@ -109,13 +103,13 @@ const UserList = (props: IProps) => {
               <svg
                 fill="none"
                 stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
                 viewBox="0 0 24 24"
                 className="w-6 h-6 text-gray-300"
               >
-                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </span>
             <input
@@ -126,7 +120,6 @@ const UserList = (props: IProps) => {
               required
             />
           </div>
-
           <div className="w-10">
             <button
               className="w-10 h-10 bg-gray-200 flex items-center justify-center rounded-full"
@@ -144,22 +137,12 @@ const UserList = (props: IProps) => {
             </button>
           </div>
         </div>
-
         <ul className="overflow-y-auto h-full">
           <h2 className="my-2 mb-2 ml-2 text-lg text-gray-600">Chats</h2>
           <>
-            {userList?.map((user: User) => (
+            {userList.map((user) => (
               <li
-                onClick={() => {
-                  if (
-                    !params?.id ||
-                    (params?.id !== user?._id &&
-                      params?.chatType === ChatTypeEnum.USER)
-                  ) {
-                    dispatch(clearCurrentChat());
-                    navigate(`/chat/${ChatTypeEnum.USER}/${user?._id}`);
-                  }
-                }}
+                onClick={() => handleChatClick(user?._id, ChatTypeEnum.USER)}
                 key={user?._id}
                 className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
               >
@@ -170,22 +153,14 @@ const UserList = (props: IProps) => {
                     alt="username"
                   />
                   <span
-                    className={`absolute w-3 h-3 ${
-                      onlineUsersList?.includes(user?._id)
-                        ? 'bg-green-600'
-                        : 'bg-red-600'
-                    }  rounded-full left-10 top-3`}
+                    className={`absolute w-3 h-3 ${onlineUsersList?.includes(user?._id) ? 'bg-green-600' : 'bg-red-600'} rounded-full left-10 top-3`}
                   ></span>
                 </div>
-
                 <div className="w-full pb-2">
                   <div className="flex justify-between">
                     <span className="block ml-2 font-semibold text-gray-600">
                       {user?.name}
                     </span>
-                    {/* <span className="block ml-2 text-sm text-gray-600">
-                      25 minutes
-                    </span> */}
                   </div>
                   <span className="block ml-2 text-sm text-gray-600">
                     {activlyTypingUserList?.[user?._id] ? (
@@ -195,74 +170,51 @@ const UserList = (props: IProps) => {
                         <span className="dot"></span>
                       </div>
                     ) : (
-                      getRecentMessage(user?._id) || 'No Messages'
+                      getRecentMessage(user?._id)
                     )}
                   </span>
                 </div>
               </li>
             ))}
             {chatGroups?.map((group) => (
-              <Link
-                onClick={() => {
-                  if (
-                    params?.chatType !== ChatTypeEnum.GROUP_CHAT &&
-                    params?.id !== group?._id
-                  ) {
-                    dispatch(clearCurrentChat());
-                  }
-                }}
+              <li
+                onClick={() => handleChatClick(group?._id, ChatTypeEnum.GROUP_CHAT)}
                 key={group?._id}
-                to={`/chat/${ChatTypeEnum.GROUP_CHAT}/${group?._id}`}
                 className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none"
               >
                 <div className="relative flex items-center p-3">
                   <div className="w-10 h-10 bg-gray-100 rounded-full flex justify-center items-center">
                     <img
-                      className="object-cover w-7 h-7 "
+                      className="object-cover w-7 h-7"
                       src="https://icon-library.com/images/group-chat-icon/group-chat-icon-13.jpg"
-                      alt="username"
+                      alt="group"
                     />
                   </div>
-
-                  {/* <span
-                      className={`absolute w-3 h-3 ${
-                        onlineUsersList?.includes(group?._id)
-                          ? 'bg-green-600'
-                          : 'bg-red-600'
-                      }  rounded-full left-10 top-3`}
-                    ></span> */}
                 </div>
-
                 <div className="w-full pb-2">
                   <div className="flex justify-between">
                     <span className="block ml-2 font-semibold text-gray-600">
                       {group?.name}
                     </span>
-                    {/* <span className="block ml-2 text-sm text-gray-600">
-                      25 minutes
-                    </span> */}
                   </div>
                   <span className="block ml-2 text-sm text-gray-600">
-                    {getRecentMessage(group?._id) || 'No Messages'}
+                    {getRecentMessage(group?._id)}
                   </span>
                 </div>
-              </Link>
+              </li>
             ))}
           </>
         </ul>
-
         <div>
           <div className="w-full px-3">
             <button
               onClick={openCreateGroupModal}
               className="flex justify-center items-center w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-md my-4"
             >
-              <h1 className="text-md font-semibold text-gray-700">
-                Create Group
-              </h1>
+              <h1 className="text-md font-semibold text-gray-700">Create Group</h1>
             </button>
           </div>
-          <li className="flex items-center justify-between text-sm transition duration-150 ease-in-out border-b border-t border-gray-300 cursor-pointerbg-gray-100 focus:outline-none pr-3">
+          <li className="flex items-center justify-between text-sm transition duration-150 ease-in-out border-b border-t border-gray-300 cursor-pointer bg-gray-100 focus:outline-none pr-3">
             <div className="flex items-center">
               <div className="relative flex items-center p-3">
                 <img
@@ -271,32 +223,17 @@ const UserList = (props: IProps) => {
                   alt="username"
                 />
               </div>
-
-              <div className="flex justify-between">
-                <span className="block  font-semibold text-gray-600">
-                  {authState?.user?.name}
-                </span>
+              <div className="block ml-2 font-semibold text-gray-600">
+                {authState?.user?.name}
               </div>
             </div>
-
-            <button onClick={logoutHandler}>
-              <svg
-                className="h-5"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="rgba(42,42,42,1)"
-              >
-                <path d="M5 22C4.44772 22 4 21.5523 4 21V3C4 2.44772 4.44772 2 5 2H19C19.5523 2 20 2.44772 20 3V6H18V4H6V20H18V18H20V21C20 21.5523 19.5523 22 19 22H5ZM18 16V13H11V11H18V8L23 12L18 16Z"></path>
-              </svg>
+            <button onClick={logoutHandler} className="text-md font-semibold text-gray-700">
+              Logout
             </button>
           </li>
         </div>
       </div>
-
-      <CreateGroupChatModal
-        isModalOpen={isCreateGroupModalOpen}
-        closeModal={closeCreateGroupModal}
-      />
+      <CreateGroupChatModal isModalOpen={isCreateGroupModalOpen} closeModal={closeCreateGroupModal} />
     </>
   );
 };

@@ -44,7 +44,6 @@ const ChatSlice = createSlice({
       console.log('asdasda', action?.payload);
 
       const _chats = [...action?.payload?.chats, ...state?.currentChat?.chats];
-      //@ts-ignore
       state.currentChat.chats = _chats;
       state.currentChat.pagination = action?.payload?.pagination;
     },
@@ -59,7 +58,6 @@ const ChatSlice = createSlice({
       state.chats = {};
     },
     incrementChatLoadPage: (state) => {
-      console.log('asdasda222');
       state.currentChat.pagination.page += 1;
     },
     setMyChatgroups: (state, action: PayloadAction<any>) => {

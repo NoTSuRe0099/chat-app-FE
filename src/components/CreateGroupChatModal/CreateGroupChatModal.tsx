@@ -20,11 +20,9 @@ const CreateGroupChatModal = (props: Iprops) => {
       url: '/chat/createNewChatGroup',
       method: 'POST',
       data: { name: groupName },
-    }).then((response) => {
-      //@ts-ignore
+    }).then((response: { data: { data: any; }; }) => {
       const group = response.data?.data;
-      //@ts-ignore
-      dispatch(fetchMyChatgroups());
+      dispatch(fetchMyChatgroups(null) as any);
       socket.emit('JOIN_GROUP', { groupId: group?._id });
       closeModal();
     });
@@ -35,9 +33,7 @@ const CreateGroupChatModal = (props: Iprops) => {
     <div className="w-screen h-screen flex justify-center items-center absolute left-0 top-0 z-50 overflow-y-auto overflow-x-hidden bg-black bg-opacity-20">
       <div className="w-full max-w-lg">
         <div className="relative w-full max-w-md max-h-full">
-          {/* <!-- Modal content --> */}
           <div className="relative bg-white rounded-lg shadow ">
-            {/* <!-- Modal header --> */}
             <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t ">
               <h3 className="text-xl font-semibold text-gray-900 ">
                 Create New Group
@@ -66,7 +62,6 @@ const CreateGroupChatModal = (props: Iprops) => {
                 <span className="sr-only">Close modal</span>
               </button>
             </div>
-            {/* <!-- Modal body --> */}
             <div className="p-4 md:p-5">
               <form
                 onSubmit={(e) => {

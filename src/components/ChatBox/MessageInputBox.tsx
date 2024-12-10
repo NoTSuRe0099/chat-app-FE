@@ -6,6 +6,8 @@ import sendIcon from '../../assets/sendIcon.svg';
 import ImageUpload from './ImageUpload';
 import { MessageType } from '../../Enums';
 import { User } from '../../auth/AuthSlice';
+import { useParams } from 'react-router-dom';
+import { IGroupDetails } from '../../Types/chatSliceTypes';
 
 interface MessageInputBoxProps {
   handleSubmitMessage: (params: {
@@ -21,6 +23,7 @@ interface MessageInputBoxProps {
   blurredHandler: () => void;
   activlyTypingUserList: Record<string, boolean>;
   chatUser: User;
+  chatGroupInfo: IGroupDetails;
 }
 
 const MessageInputBox: React.FC<MessageInputBoxProps> = ({
@@ -34,8 +37,13 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
   blurredHandler,
   activlyTypingUserList,
   chatUser,
+  chatGroupInfo
 }) => {
   const [showModal, setShowModal] = useState(false);
+  const params = useParams();
+  const { id, chatType } = params;
+  console.log('chatUser._id', { id, chatUser: chatUser._id, chatGroupInfo });
+  const isUserTyping = activlyTypingUserList?.[chatUser._id] && (id === chatUser._id || id === chatGroupInfo?._id);
   return (
     <form
       onSubmit={(e) => {
@@ -47,7 +55,7 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
       autoComplete='off'
       className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px] relative"
     >
-      {activlyTypingUserList?.[chatUser._id] && (
+      {isUserTyping && (
         <div className="typing-indicator typing-in-chat-box-indicator absolute bottom-2">
           <span className="dot"></span>
           <span className="dot"></span>

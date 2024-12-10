@@ -24,10 +24,9 @@ const GroupChatInviteModal: FC<IGroupChatInviteModalProps> = ({
 
   useEffect(() => {
     dispatch(
-      // @ts-ignore
       fetchGroupChatUserForInvite({
         groupId: groupId,
-      })
+      }) as any
     );
 
     return () => {
@@ -37,11 +36,10 @@ const GroupChatInviteModal: FC<IGroupChatInviteModalProps> = ({
 
   const sendInviteHandler = (receiverId: string) => {
     dispatch(
-      //@ts-ignore
       sendGroupInviteToUser({
         receiverId: receiverId,
         groupId: groupId,
-      })
+      }) as any
     );
   };
 

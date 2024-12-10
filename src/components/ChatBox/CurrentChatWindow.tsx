@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { loadChatsAction } from '../../Actions/ChatActions';
@@ -158,7 +158,7 @@ const CurrentChatWindow = ({
     }
   };
 
-  const loadMoreData = async () => {
+  const loadMoreData = () => {
     if (loading) return;
 
     setLoading(true);
@@ -170,18 +170,26 @@ const CurrentChatWindow = ({
       });
 
       if (isGroupChat && chatGroupInfo?._id) {
-        queryParams.append('groupId', chatGroupInfo._id);
-      } else if (chatUser?._id) {
+        queryParams.append('groupId', params.id);
+      } else if (!isGroupChat && chatUser?._id) {
         queryParams.append('receiverId', params.id as string);
       }
+      console.log('queryParams', {
+        queryParams: queryParams.toString(), isGroupChat,
+        chatGroupInfo,
+        chatUser
+      });
 
-      dispatch(
-        //@ts-ignore
-        loadChatsAction({
-          queryParams: `?${queryParams.toString()}`,
-          callback: handleScrollAfterLoad,
-        })
-      );
+
+      if ((isGroupChat && chatGroupInfo?._id) || (!isGroupChat && chatUser?._id)) {
+        dispatch(
+          loadChatsAction({
+            queryParams: `?${queryParams.toString()}`,
+            callback: handleScrollAfterLoad,
+          }) as any
+        );
+      }
+
     } finally {
       setLoading(false);
     }
@@ -240,6 +248,7 @@ const CurrentChatWindow = ({
           blurredHandler={bluredHandler}
           chatUser={chatUser}
           activlyTypingUserList={activlyTypingUserList}
+          chatGroupInfo={chatGroupInfo}
         />
       </div>
     </>

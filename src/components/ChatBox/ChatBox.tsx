@@ -47,19 +47,29 @@ const ChatPage = () => {
   };
 
   useEffect(() => {
-    if (params?.id && params?.chatType === ChatTypeEnum.USER) {
-      const user = chatState?.users?.find((user) => user?._id === params?.id);
-      setCurrentChatUser(user!);
-      setToggleUserList(false);
-    } else if (params?.id && params?.chatType === ChatTypeEnum.GROUP_CHAT) {
-      const groupChatState =
-        params?.chatType === ChatTypeEnum.GROUP_CHAT
-          ? chatState?.chatGroups?.find((it) => it?._id === params?.id)
-          : null;
-      setCurrentChatGroup(groupChatState);
-      setToggleUserList(false);
+    dispatch(fetchAllUser(null) as any);
+    if (!('Notification' in window)) {
+      console.log('Browser does not support desktop notification');
     } else {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    const resetChat = () => {
       setToggleUserList(true);
+    };
+
+    if (params?.id) {
+      if (params?.chatType === ChatTypeEnum.USER) {
+        updateUserChat();
+      } else if (params?.chatType === ChatTypeEnum.GROUP_CHAT) {
+        updateGroupChat();
+      } else {
+        resetChat();
+      }
+    } else {
+      resetChat();
     }
   }, [params?.id, params?.chatType]);
 
@@ -67,15 +77,20 @@ const ChatPage = () => {
     dispatch(flushMessages());
   }, [currentChatUser]);
 
-  useEffect(() => {
-    //@ts-ignore
-    dispatch(fetchAllUser());
-    if (!('Notification' in window)) {
-      console.log('Browser does not support desktop notification');
-    } else {
-      Notification.requestPermission();
-    }
-  }, []);
+  const updateUserChat = () => {
+    const user = chatState?.users?.find((user) => user?._id === params?.id) || null;
+    setCurrentChatUser(user);
+    setToggleUserList(false);
+    // setCurrentChatGroup(null);
+  };
+
+  const updateGroupChat = () => {
+    const groupChatState = chatState?.chatGroups?.find((it) => it?._id === params?.id) || null;
+    // setCurrentChatUser(null);
+    setCurrentChatGroup(groupChatState);
+    setToggleUserList(false);
+  };
+
 
   const getUserByUserId = (senderId: string) => {
     return chatState?.users?.find((user) => user?._id === senderId);
@@ -138,6 +153,12 @@ const ChatPage = () => {
     }
   };
 
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 0);
+  };
+
   useEffect(() => {
     if (socket) {
       // Handler for individual messages
@@ -154,10 +175,8 @@ const ChatPage = () => {
           );
         }
 
-        setTimeout(() => {
-          messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 0);
-        
+        scrollToBottom();
+
         const userId = params?.id;
         if (userId !== data?.senderId) {
           const user = getUserByUserId(data?.senderId);
@@ -172,16 +191,18 @@ const ChatPage = () => {
 
       // Handler for group messages
       socket?.on(EventTypes.RECEIVE_GROUP_MESSAGE, (data) => {
-        const { groupId, message, senderId } = data;
-        console.log('group data', data);
+        const { groupId, senderId } = data;
+        if (params?.id === groupId) {
+          dispatch(
+            pushNewCurrentChat({
+              ...data,
+              _id: crypto.randomUUID(),
+              type: ChatTypeEnum.GROUP_CHAT,
+            })
+          );
+        }
 
-        dispatch(
-          pushNewCurrentChat({
-            ...data,
-            _id: crypto.randomUUID(),
-            type: ChatTypeEnum.GROUP_CHAT,
-          })
-        );
+        scrollToBottom();
 
         if (senderId !== authState?.user?._id) {
           showNotification(
@@ -198,11 +219,9 @@ const ChatPage = () => {
         setOnlineUsersList(data);
       });
 
-      socket?.on(EventTypes.NEW_GROUP_INVITATION, (data) => {
-        //@ts-ignore
-        dispatch(fetchGroupChatInvites());
+      socket?.on(EventTypes.NEW_GROUP_INVITATION, () => {
+        dispatch(fetchGroupChatInvites(null) as any);
         new Audio(audioUrl)?.play();
-        console.log('NEW_GROUP_CREATED', data);
       });
 
       // Cleanup on component unmount
@@ -213,7 +232,7 @@ const ChatPage = () => {
         socket?.off(EventTypes.NEW_GROUP_INVITATION);
       };
     }
-  }, [socket, params?.id, chatUser?._id, dispatch]);
+  }, [socket, params?.id, params?.chatType, chatUser?._id, dispatch]);
 
   const sendMessage = (payload: sendMessageFn) => {
     if (socket) {
@@ -222,7 +241,6 @@ const ChatPage = () => {
       } else {
         sendGroupChatMessage(payload);
       }
-      // new Audio(audioUrl).play();
       messageContainerRef?.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
@@ -291,11 +309,7 @@ const ChatPage = () => {
               user={authState?.user!}
               sendMessage={sendMessage}
               openUserList={openUserList}
-              chatGroupInfo={{
-                userList: currentChatGroup?.userList,
-                name: currentChatGroup?.name,
-                _id: currentChatGroup?._id,
-              }}
+              chatGroupInfo={currentChatGroup}
             />
           </>
         )}
