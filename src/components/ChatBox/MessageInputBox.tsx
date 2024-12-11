@@ -1,14 +1,13 @@
 import EmojiPicker from 'emoji-picker-react';
-import React, { MouseEvent, useState } from 'react';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { MessageType } from '../../Enums';
+import { IGroupDetails } from '../../Types/chatSliceTypes';
 import emojiIcon from '../../assets/emojiIcon.svg';
 import micIcon from '../../assets/micIcon.svg';
 import sendIcon from '../../assets/sendIcon.svg';
-import ImageUpload from './ImageUpload';
-import { MessageType } from '../../Enums';
 import { User } from '../../auth/AuthSlice';
-import { useParams } from 'react-router-dom';
-import { IGroupDetails } from '../../Types/chatSliceTypes';
-import { MouseDownEvent } from 'emoji-picker-react/dist/config/config';
+import ImageUpload from './ImageUpload';
 
 interface MessageInputBoxProps {
   handleSubmitMessage: (params: {
