@@ -1,5 +1,5 @@
 import EmojiPicker from 'emoji-picker-react';
-import React, { useState } from 'react';
+import React, { MouseEvent, useState } from 'react';
 import emojiIcon from '../../assets/emojiIcon.svg';
 import micIcon from '../../assets/micIcon.svg';
 import sendIcon from '../../assets/sendIcon.svg';
@@ -8,6 +8,7 @@ import { MessageType } from '../../Enums';
 import { User } from '../../auth/AuthSlice';
 import { useParams } from 'react-router-dom';
 import { IGroupDetails } from '../../Types/chatSliceTypes';
+import { MouseDownEvent } from 'emoji-picker-react/dist/config/config';
 
 interface MessageInputBoxProps {
   handleSubmitMessage: (params: {
@@ -43,6 +44,11 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
   const params = useParams();
   const { id } = params;
   const isUserTyping = activlyTypingUserList?.[chatUser?._id] && (id === chatUser?._id || id === chatGroupInfo?._id);
+
+  const handleEmojiClick = (emojiObject: any) => {
+    handleEmoji(emojiObject);
+  };
+
   return (
     <form
       onSubmit={(e) => {
@@ -51,7 +57,7 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
           handleSubmitMessage({ messageType: MessageType.TEXT });
         }
       }}
-      autoComplete='off'
+      autoComplete="off"
       className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px] relative"
     >
       {isUserTyping && (
@@ -62,12 +68,29 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
         </div>
       )}
       <button
-        onClick={() => setIsEmojiDrawerOpen((prev) => !prev)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsEmojiDrawerOpen((prev) => !prev);
+        }}
         className="w-6 h-6 text-gray-500 relative"
         type="button"
       >
-        <div className="absolute bottom-14">
-          <EmojiPicker onEmojiClick={handleEmoji} open={isEmojiDrawerOpen} />
+        <div
+          className="absolute bottom-14"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {isEmojiDrawerOpen && (
+            <div className="relative">
+              <EmojiPicker onEmojiClick={handleEmojiClick} />
+              <button
+                onClick={() => setIsEmojiDrawerOpen(false)}
+                className="absolute -top-2 -right-10 mt-2 mr-2 text-gray-500 w-7 h-7 bg-white shadow-sm flex justify-center items-center rounded-md text-xl"
+                type="button"
+              >
+                &times;
+              </button>
+            </div>
+          )}
         </div>
         <img className="text-gray-500" src={emojiIcon} alt="emoji-icon" />
       </button>
