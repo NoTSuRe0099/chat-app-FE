@@ -15,6 +15,16 @@ export const registerAction = createAsyncThunk(
       url: '/auth/register',
       data: data,
     });
+    thunkAPI.dispatch(setAccessToken(response?.data?.data));
+    if (response?.data?.data) {
+      localStorage.setItem(
+        'authState',
+        JSON.stringify({
+          access_token: response.data?.data?.access_token,
+          isAuthenticated: true,
+        })
+      );
+    }
     thunkAPI.dispatch(fetchUserData(null));
     return response.data;
   }
