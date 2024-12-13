@@ -7,6 +7,7 @@ import {
   ICurrentChats,
   ISingleUserChat,
 } from '../../Types/chatSliceTypes';
+import { act } from 'react';
 
 const storedUserList = sessionStorage.getItem('userList')
   ? JSON.parse(sessionStorage.getItem('userList'))
@@ -106,6 +107,19 @@ const ChatSlice = createSlice({
         }
       }
     },
+
+    deleteMessage: (state, action: PayloadAction<{ messageId: string }>) => {
+      const _chats = [...state.currentChat.chats];
+ 
+      const index = _chats.findIndex(
+        ({ _id }) => _id === action?.payload?.messageId
+      );
+      console.log('_chats', _chats, action?.payload?.messageId, index);
+      if (index !== -1) {
+        _chats?.splice(index, 1);
+        state.currentChat.chats = _chats;
+      }
+    },
   },
 });
 
@@ -122,6 +136,7 @@ export const {
   incrementChatLoadPage,
   pushNewCurrentChat,
   changeIsTypingUserStatus,
+  deleteMessage,
 } = ChatSlice.actions;
 
 // Selector to access chat state

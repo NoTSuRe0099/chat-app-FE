@@ -89,62 +89,68 @@ const ImageUpload = ({
 
   return (
     <>
-      <label className="cursor-pointer">
-        <input
-          type="file"
-          onChange={handleImageChange}
-          className="hidden"
-          accept="image/png, image/gif, image/jpeg"
-        />
-        <img
-          className="w-6 h-6 text-gray-500"
-          src={attachIcon}
-          alt="file-icon"
-        />
-      </label>
-      <div className="flex justify-center items-center h-screen absolute">
-        {showModal && (
-          <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center">
-            <div className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full">
-              <div className="p-4">
-                <img
-                  src={image}
-                  alt="Preview"
-                  className="w-[500px] h-[300px] object-contain"
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        handleSend();
+      }}>
+        <label className="cursor-pointer">
+          <input
+            type="file"
+            onChange={handleImageChange}
+            className="hidden"
+            accept="image/png, image/gif, image/jpeg"
+          />
+          <img
+            className="w-6 h-6 text-gray-500"
+            src={attachIcon}
+            alt="file-icon"
+          />
+        </label>
+        <div className="flex justify-center items-center h-screen absolute">
+          {showModal && (
+            <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center">
+              <div className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full">
+                <div className="p-4">
+                  <img
+                    src={image}
+                    alt="Preview"
+                    className="w-[500px] h-[300px] object-contain"
+                  />
+                </div>
+                <input
+                  type="text"
+                  onChange={(e) => setMessage(e.target.value)}
+                  value={message}
+                  placeholder="Message"
+                  className="block w-[490px] py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700 mb-2"
+                  name="message"
+                  onFocus={focusedHandler}
+                  onBlur={blurredHandler}
                 />
-              </div>
-              <input
-                type="text"
-                onChange={(e) => setMessage(e.target.value)}
-                value={message}
-                placeholder="Message"
-                className="block w-[490px] py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700 mb-2"
-                name="message"
-                onFocus={focusedHandler}
-                onBlur={blurredHandler}
-              />
-              {uploadProgress ? <div className="flex w-[90%] h-4 mx-auto bg-gray-200 rounded-full overflow-hidden mb-2">
-                <div className="flex flex-col justify-center rounded-full overflow-hidden bg-blue-600 text-xs text-white text-center whitespace-nowrap transition duration-500"
-                  style={{ width: `${uploadProgress}%` }}>{uploadProgress}%</div>
-              </div> : null}
-              <div className="border-t p-4 flex justify-end space-x-4">
-                <button
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-                  onClick={handleCancel}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-                  onClick={handleSend}
-                >
-                  Send
-                </button>
+                {uploadProgress ? <div className="flex w-[90%] h-4 mx-auto bg-gray-200 rounded-full overflow-hidden mb-2">
+                  <div className="flex flex-col justify-center rounded-full overflow-hidden bg-blue-600 text-xs text-white text-center whitespace-nowrap transition duration-500"
+                    style={{ width: `${uploadProgress}%` }}>{uploadProgress}%</div>
+                </div> : null}
+                <div className="border-t p-4 flex justify-end space-x-4">
+                  <button
+                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type='submit'
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+                    onClick={handleSend}
+                  >
+                    Send
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </form>
     </>
   );
 };

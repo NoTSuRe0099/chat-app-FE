@@ -24,6 +24,7 @@ interface MessageInputBoxProps {
   activlyTypingUserList: Record<string, boolean>;
   chatUser: User;
   chatGroupInfo: IGroupDetails;
+  handleMessageInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const MessageInputBox: React.FC<MessageInputBoxProps> = ({
@@ -37,7 +38,8 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
   blurredHandler,
   activlyTypingUserList,
   chatUser,
-  chatGroupInfo
+  chatGroupInfo,
+  handleMessageInput
 }) => {
   const [showModal, setShowModal] = useState(false);
   const params = useParams();
@@ -49,15 +51,8 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
   };
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (message && !showModal) {
-          handleSubmitMessage({ messageType: MessageType.TEXT });
-        }
-      }}
-      autoComplete="off"
-      className="flex items-center justify-between w-full p-3 border-t border-gray-300 min-h-[41px] relative"
+    <div
+      className='flex items-center w-full p-3 border-t border-gray-300 min-h-[41px] relative'
     >
       {isUserTyping && (
         <div className="typing-indicator typing-in-chat-box-indicator absolute bottom-2">
@@ -104,23 +99,32 @@ const MessageInputBox: React.FC<MessageInputBoxProps> = ({
         setShowModal={setShowModal}
       />
 
-      <input
-        type="text"
-        onChange={(e) => setMessage(e.target.value)}
-        value={message}
-        placeholder="Message"
-        className="block w-full py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700"
-        name="message"
-        onFocus={focusedHandler}
-        onBlur={blurredHandler}
-      />
-      <button className="w-6 h-6" type="button">
-        <img src={micIcon} alt="mic-icon" />
-      </button>
-      <button className="w-6 h-6 rotate-90" type="submit">
-        <img src={sendIcon} alt="send-icon" />
-      </button>
-    </form>
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        if (message && !showModal) {
+          handleSubmitMessage({ messageType: MessageType.TEXT });
+        }
+      }}
+        autoComplete="off"
+        className="flex items-center justify-between w-full">
+        <input
+          type="text"
+          onChange={(e) => handleMessageInput(e)}
+          value={message}
+          placeholder="Message"
+          className="block w-full py-2 pl-4 mx-3 bg-gray-100 rounded-full outline-none focus:text-gray-700"
+          name="message"
+          onFocus={focusedHandler}
+          onBlur={blurredHandler}
+        />
+        <button className="w-6 h-6" type="button">
+          <img src={micIcon} alt="mic-icon" />
+        </button>
+        <button className="w-6 h-6 rotate-90" type="submit">
+          <img src={sendIcon} alt="send-icon" />
+        </button>
+      </form>
+    </div>
   );
 };
 

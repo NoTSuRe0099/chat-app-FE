@@ -11,6 +11,7 @@ interface ChatsContentProps {
   user: User;
   getUserDetailsById: (id: string) => { name: string; } | undefined;
   messageContainerRef: MutableRefObject<HTMLDivElement | null>;
+  handleDelete: (messageId: string) => void;
 }
 
 const ChatContent: React.FC<ChatsContentProps> = ({
@@ -19,6 +20,7 @@ const ChatContent: React.FC<ChatsContentProps> = ({
   user,
   getUserDetailsById,
   messageContainerRef,
+  handleDelete
 }) => {
   return (
     <div
@@ -33,11 +35,26 @@ const ChatContent: React.FC<ChatsContentProps> = ({
               className={`flex ${chat?.senderId === user?._id ? 'justify-end' : 'justify-start'}`}
             >
               <div className="relative max-w-xl md:w-auto break-words px-5 py-3 bg-white rounded-lg shadow-lg h-auto">
-                <span className="block text-sm font-medium text-gray-900 mb-1">
-                  {chat?.senderId === user?._id
-                    ? 'You'
-                    : getUserDetailsById(chat?.senderId)?.name}
-                </span>
+                <div className="relative flex items-center">
+                  <span className="block text-xs font-medium text-gray-900 mb-1">
+                    {chat?.senderId === user?._id ? 'You' : getUserDetailsById(chat?.senderId)?.name}
+                  </span>
+                  {chat?.senderId === user?._id && <div className="absolute top-0 right-0">
+                    <div className="relative group">
+                      <button className="text-gray-500 hover:text-gray-700 focus:outline-none cursor-pointer h-1 flex justify-center items-center">
+                        ...
+                      </button>
+                      <div className="hidden group-hover:block absolute right-1 w-12 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <button
+                          className="block px-2 py-2 text-left text-xs text-gray-700 hover:bg-gray-100 w-max cursor-pointer "
+                          onClick={() => handleDelete(chat?._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>}
+                </div>
                 {chat?.messageType === 'MEDIA' ? (
                   <>
                     <img
@@ -46,13 +63,13 @@ const ChatContent: React.FC<ChatsContentProps> = ({
                       className="max-w-xs max-h-xs w-32 h-32 object-contain"
                     />
                     {chat?.message.length > 0 && (
-                      <p className="block text-gray-700 w-max text-left mt-2">
+                      <p className="block text-gray-700 w-max text-left mt-2 text-sm">
                         {chat?.message}
                       </p>
                     )}
                   </>
                 ) : (
-                  <p className="block text-gray-700 w-max text-left">
+                  <p className="block text-gray-700 w-max text-left text-sm">
                     {chat?.message}
                   </p>
                 )}

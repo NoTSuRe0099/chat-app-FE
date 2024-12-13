@@ -17,6 +17,7 @@ import { useSocket } from '../../context/SocketContext';
 import CurrentChatWindow from './CurrentChatWindow';
 import UserList from './UserList';
 import {
+  deleteMessage,
   flushMessages,
   pushNewCurrentChat,
   pushNewMessage,
@@ -210,6 +211,18 @@ const ChatPage = () => {
             `/chat/group/${groupId}`,
             senderId
           );
+        }
+      });
+
+
+      socket?.on(EventTypes.DELETE_MESSAGE_OUT, (data: {
+        senderId: string;
+        groupId: string;
+        messageId: string;
+      }) => {
+        const { senderId, groupId, messageId } = data;
+        if ([senderId, groupId].includes(params?.id)) {
+          dispatch(deleteMessage({ messageId }));
         }
       });
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { loadChatsAction } from '../../Actions/ChatActions';
-import { ChatTypeEnum } from '../../Enums';
+import { ChatTypeEnum, EventTypes } from '../../Enums';
 import {
   chatUser,
   IChat,
@@ -20,6 +20,7 @@ import ChatHeader from './ChatHeader';
 import MessageInputBox from './MessageInputBox';
 import {
   changeIsTypingUserStatus,
+  deleteMessage,
   incrementChatLoadPage,
   selectChatState,
 } from './chatSlice';
@@ -97,14 +98,27 @@ const CurrentChatWindow = ({
     dispatch(changeIsTypingUserStatus({ senderId, isTyping, groupId }));
   };
 
+  const handleMessageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e?.target;
+    setMessage(value);
+    if (value.length > 0) {
+      fucusedHandler();
+    } else {
+      bluredHandler();
+    }
+
+  };
+
   const fucusedHandler = () => {
-    socket?.emit('USER_TYPING', {
-      senderId: user?._id,
-      groupId: params?.chatType === ChatTypeEnum.GROUP_CHAT ? params?.id : "",
-      receiverId: params?.chatType === ChatTypeEnum.USER ? params?.id : "",
-      groupUserList: params?.chatType === ChatTypeEnum.GROUP_CHAT ? chatGroupInfo?.userList?.map(({ _id }) => _id) : null,
-      isTyping: true,
-    });
+    if (message.length > 0) {
+      socket?.emit('USER_TYPING', {
+        senderId: user?._id,
+        groupId: params?.chatType === ChatTypeEnum.GROUP_CHAT ? params?.id : "",
+        receiverId: params?.chatType === ChatTypeEnum.USER ? params?.id : "",
+        groupUserList: params?.chatType === ChatTypeEnum.GROUP_CHAT ? chatGroupInfo?.userList?.map(({ _id }) => _id) : null,
+        isTyping: true,
+      });
+    }
   };
 
   const bluredHandler = () => {
@@ -210,6 +224,20 @@ const CurrentChatWindow = ({
     }, 0);
   };
 
+  const handleDelete = (messageId: string) => {
+    console.log(`Delete message with ID: ${messageId}`);
+    if (params?.chatType === ChatTypeEnum.USER) {
+      dispatch(deleteMessage({ messageId }));
+    }
+    socket.emit(EventTypes.DELETE_MESSAGE_IN, {
+      messageId,
+      groupId: params?.chatType === ChatTypeEnum.GROUP_CHAT ? params?.id : "",
+      senderId: user?._id,
+      receiverId: params?.chatType === ChatTypeEnum.USER ? params?.id : "",
+    });
+  };
+
+
   return (
     <>
       {isInvtUserModalOpen && (
@@ -235,6 +263,7 @@ const CurrentChatWindow = ({
           user={user}
           getUserDetailsById={getUserDetailsById}
           messageContainerRef={messageContainerRef}
+          handleDelete={handleDelete}
         />
 
         <MessageInputBox
@@ -249,6 +278,7 @@ const CurrentChatWindow = ({
           chatUser={chatUser}
           activlyTypingUserList={activlyTypingUserList}
           chatGroupInfo={chatGroupInfo}
+          handleMessageInput={handleMessageInput}
         />
       </div>
     </>
